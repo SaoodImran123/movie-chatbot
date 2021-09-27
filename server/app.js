@@ -7,7 +7,11 @@ const server = app.listen(port, function() {
     console.log('server running on port ' + port);
 });
 
-const io = require('socket.io')(server);
+const io = require('socket.io')(server, {
+    cors: {
+      origin: '*',
+    }
+  });
 
 io.on('connection', function(socket) {
     console.log(socket.id)
