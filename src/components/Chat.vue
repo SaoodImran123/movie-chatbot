@@ -8,16 +8,19 @@
                         <h4 class="card-title"><strong>Chat</strong></h4>
                     </div>
                     <div class="container-sm" id="chat-content" style="overflow-y: scroll !important; height:400px !important;">
+                        <div class="date-header">
+                            <span class="date">{{ getCurrentDate() }}</span> 
+                        </div>
                         <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
                             <div class="media-body">
                                 <p>Hi. How can I help you?</p>
-                                <p class="meta"><time datetime="2021">23:58</time></p> 
+                                <p class="meta"><time datetime="2021">{{ getCurrentTime() }}</time></p> 
                             </div>
                         </div>
                         <div class="media media-chat media-chat-reverse">
                             <div class="media-body"  v-for="(msg, index) in messages" :key="index">
                                 <p>{{ msg.message }}</p>
-                                <p class="meta"><time datetime="2021">23:58</time></p>
+                                <p class="meta"><time datetime="2021">{{ getCurrentTime() }}</time></p>
                             </div>
                         </div>
                     </div>
@@ -71,6 +74,17 @@ export default {
         }
     },
     methods: {
+        getCurrentTime(){
+            const today = new Date();
+            var time = today.getHours() + ":" + today.getMinutes();
+            return time;
+        },
+        getCurrentDate(){
+            const monthNames = ["January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"];
+            const today = new Date();
+            var date = monthNames[today.getMonth()] + " " + today.getDay();
+            return date;
+        },
         sendMessage(e) {
             e.preventDefault();
             
@@ -83,13 +97,12 @@ export default {
     mounted() {
         this.socket.on('MESSAGE', (data) => {
             this.messages = [...this.messages, data];
-            // you can also do this.messages.push(data)
         });
     }
 }
 </script>
 
-<style>
+<style scoped>
 .card-bordered {
     float: right;
     width: 400px;
@@ -170,7 +183,7 @@ h4.card-title {
     line-height: 1.5;
     margin-bottom: 0;
     padding: 15px 20px;
-    border-bottom: 1px solid rgba(77, 82, 89, 0.07)
+    border-bottom: 1px solid rgba(77, 82, 89, 0.07);
 }
 
 .ps-container {
@@ -182,17 +195,6 @@ h4.card-title {
     touch-action: auto;
     overflow: hidden !important;
     -ms-overflow-style: none
-}
-
-.media-chat {
-    padding-right: 64px;
-    margin-bottom: 0
-}
-
-.media {
-    padding: 16px 12px;
-    -webkit-transition: background-color .2s linear;
-    transition: background-color .2s linear
 }
 
 .media .avatar {
@@ -226,10 +228,10 @@ h4.card-title {
     position: relative;
     padding: 6px 8px;
     margin: 4px 0;
-    background-color: #f5f6f7;
+    background-color: #e0e0e0;
     border-radius: 3px;
     font-weight: 100;
-    color: #9b9b9b
+    color: black
 }
 
 .media>* {
@@ -240,7 +242,20 @@ h4.card-title {
     color: #9b9b9b !important;
     background-color: transparent !important;
     padding: 0;
-    opacity: .8
+    opacity: 0.8;
+    font-size: 14px;
+}
+div.date-header{
+    width: 100%; 
+    margin-top: 10px;
+    text-align: center;
+}
+
+span.date {
+    color: #9b9b9b;
+    background-color: white ;
+    padding: 0 10px;
+    font-size: 14px;
 }
 
 .media-meta-day {
@@ -255,7 +270,7 @@ h4.card-title {
 }
 
 .media {
-    padding: 16px 12px;
+    padding: 0 12px 0 12px;
     -webkit-transition: background-color .2s linear;
     transition: background-color .2s linear
 }
@@ -291,14 +306,7 @@ h4.card-title {
 }
 
 .media-chat {
-    padding-right: 64px;
     margin-bottom: 0
-}
-
-.media {
-    padding: 16px 12px;
-    -webkit-transition: background-color .2s linear;
-    transition: background-color .2s linear
 }
 
 .media-chat.media-chat-reverse .media-body p {
@@ -306,14 +314,6 @@ h4.card-title {
     clear: right;
     background-color: #48b0f7;
     color: #fff
-}
-
-.media-chat .media-body p {
-    position: relative;
-    padding: 6px 8px;
-    margin: 4px 0;
-    background-color: #f5f6f7;
-    border-radius: 3px
 }
 
 .border-light {
@@ -330,7 +330,7 @@ h4.card-title {
     display: flex;
     -webkit-box-align: center;
     align-items: center;
-    padding: 12px 20px;
+    padding: 10px 10px;
     background-color: #f9fafb
 }
 
@@ -347,7 +347,8 @@ h4.card-title {
     flex-grow: 1;
     border: none;
     outline: none !important;
-    background-color: transparent
+    background-color: transparent;
+    min-width: 340px;
 }
 
 button,

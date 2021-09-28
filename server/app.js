@@ -17,5 +17,7 @@ io.on('connection', function(socket) {
     console.log(socket.id)
     socket.on('SEND_MESSAGE', function(data) {
         io.emit('MESSAGE', data);
+        // send nlp 
+        // return back to client
     });
 });
