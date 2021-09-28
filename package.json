@@ -5,13 +5,15 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "sc-serve": "concurrently --kill-others \"node server/app.js\" \"npm run serve\""
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
     "@fortawesome/vue-fontawesome": "^2.0.2",
     "bootstrap": "^5.1.1",
+    "concurrently": "^6.2.2",
     "core-js": "^3.6.5",
     "express": "^4.17.1",
     "socket.io": "^4.2.0",
