@@ -9,18 +9,18 @@
                     </div>
                     <div class="container-sm" id="chat-content" style="overflow-y: scroll !important; height:400px !important;">
                         <div class="date-header">
-                            <span class="date">{{ getCurrentDate() }}</span> 
+                            <span class="date">{{ this.createdDate }}</span> 
                         </div>
                         <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
                             <div class="media-body">
                                 <p>Hi. How can I help you?</p>
-                                <p class="meta"><time datetime="2021">{{ getCurrentTime() }}</time></p> 
+                                <p class="meta"><time datetime="2021">{{ this.createdTime }}</time></p> 
                             </div>
                         </div>
                         <div class="media media-chat media-chat-reverse">
                             <div class="media-body"  v-for="(msg, index) in messages" :key="index">
                                 <p>{{ msg.message }}</p>
-                                <p class="meta"><time datetime="2021">{{ getCurrentTime() }}</time></p>
+                                <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
                             </div>
                         </div>
                     </div>
@@ -35,64 +35,55 @@
         </div>
     </div>
 </div>
-
-<!-- functionality 
-  <div class="card mt-3">
-      <div class="card-body">
-          <div class="card-body">
-              <div class="messages" v-for="(msg, index) in messages" :key="index">
-                  <p><span class="font-weight-bold">{{ msg.user }}: </span>{{ msg.message }}</p>
-              </div>
-          </div>
-      </div>
-      <div class="card-footer">
-          <form @submit.prevent="sendMessage">
-              <div class="gorm-group">
-                  <label for="user">User:</label>
-                  <input type="text" v-model="user" class="form-control">
-              </div>
-              <div class="gorm-group pb-3">
-                  <label for="message">Message:</label>
-                  <input type="text" v-model="message" class="form-control">
-              </div>
-              <button type="submit" class="btn btn-success">Send</button>
-          </form>
-      </div>
-  </div>
-   -->
 </template>
 
 <script>
 import io from 'socket.io-client';
+function getCurrentTime(){
+    const today = new Date();
+    var mins = today.getMinutes();
+    if (mins < 10) {
+        mins = "0" + mins;
+    }
+    var hours = today.getHours() - 12;
+    var am = "AM";
+    if (today.getHours() > 12){
+        am = "PM";
+    }
+    var time = hours + ":" + mins + " " + am;
+    return time;
+}
+function getCurrentDate(){
+    const monthNames = ["January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"];
+    const today = new Date();
+    var date = monthNames[today.getMonth()] + " " + today.getDay();
+    return date;
+}
 export default {
     data() {
         return {
             user: '',
             message: '',
             messages: [],
+            time: '',
+            createdTime: '',
             socket : io('ws://localhost:3050')
         }
     },
     methods: {
-        getCurrentTime(){
-            const today = new Date();
-            var time = today.getHours() + ":" + today.getMinutes();
-            return time;
-        },
-        getCurrentDate(){
-            const monthNames = ["January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"];
-            const today = new Date();
-            var date = monthNames[today.getMonth()] + " " + today.getDay();
-            return date;
-        },
         sendMessage(e) {
+            this.time = getCurrentTime();
             e.preventDefault();
-            
             this.socket.emit('SEND_MESSAGE', {
-                message: this.message
+                message: this.message,
+                time: this.time
             });
             this.message = ''
         }
+    },
+    created() {
+        this.createdTime = getCurrentTime();
+        this.createdDate = getCurrentDate();
     },
     mounted() {
         this.socket.on('MESSAGE', (data) => {
@@ -307,6 +298,10 @@ span.date {
 
 .media-chat {
     margin-bottom: 0
+}
+
+.media-chat.media-chat-reverse .media-body{
+    width: 80%;
 }
 
 .media-chat.media-chat-reverse .media-body p {
