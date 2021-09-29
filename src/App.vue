@@ -20,4 +20,8 @@ export default {
 </script>
 
 <style>
+html{
+  font-family: Segoe UI;
+  font-size: 14px;
+}
 </style>

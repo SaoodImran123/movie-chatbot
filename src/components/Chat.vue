@@ -7,7 +7,7 @@
                     <div class="card-header">
                         <h4 class="card-title"><strong>Chat</strong></h4>
                     </div>
-                    <div class="container-sm" id="chat-content" style="overflow-y: scroll !important; height:400px !important;">
+                    <div class="container-sm" id="chat-content">
                         <div class="date-header">
                             <span class="date">{{ this.createdDate }}</span> 
                         </div>
@@ -24,7 +24,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="publisher bt-1 border-light"> 
+                    <div class="publisher"> 
                         <form @submit.prevent="sendMessage">
                         <input class="publisher-input form-control" type="text" v-model="message" placeholder="Write something"> 
                         <button type="submit" class="publisher-btn text-info"><i class="fa fa-paper-plane"></i></button>
@@ -128,14 +128,14 @@ body {
     justify-content: space-between;
     -webkit-box-align: center;
     align-items: center;
-    padding: 15px 20px;
-    background-color: transparent;
-    border: 1px solid rgb(195 194 194);
+    padding: 0 20px 5px 20px;
+    background-color: #651E3E;
 }
 
 .card-header .card-title {
     padding: 0;
-    border: none
+    border: none;
+    color: #F6CD61;
 }
 
 h4.card-title {
@@ -149,6 +149,12 @@ h4.card-title {
 .card-header>* {
     margin-left: 8px;
     margin-right: 8px
+}
+
+#chat-content{
+    overflow: hidden;
+    height:400px;
+    background-color: #851E3E;
 }
 
 .btn-secondary {
@@ -230,7 +236,7 @@ h4.card-title {
 }
 
 .media-chat .media-body p.meta {
-    color: #9b9b9b !important;
+    color: #F6CD61 !important;
     background-color: transparent !important;
     padding: 0;
     opacity: 0.8;
@@ -243,8 +249,8 @@ div.date-header{
 }
 
 span.date {
-    color: #9b9b9b;
-    background-color: white ;
+    color: #F6CD61;
+    background-color: transparent ;
     padding: 0 10px;
     font-size: 14px;
 }
@@ -311,14 +317,6 @@ span.date {
     color: #fff
 }
 
-.border-light {
-    border-color: #f1f2f3 !important
-}
-
-.bt-1 {
-    border-top: 1px solid #ebebeb !important
-}
-
 .publisher {
     position: relative;
     display: -webkit-box;
@@ -326,7 +324,7 @@ span.date {
     -webkit-box-align: center;
     align-items: center;
     padding: 10px 10px;
-    background-color: #f9fafb
+    background-color: #651E3E
 }
 
 .publisher>*:first-child {
@@ -344,6 +342,11 @@ span.date {
     outline: none !important;
     background-color: transparent;
     min-width: 340px;
+    color: white;
+}
+
+.publisher-input::placeholder {
+    color: white;
 }
 
 button,
