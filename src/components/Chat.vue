@@ -42,12 +42,13 @@ import io from 'socket.io-client';
 function getCurrentTime(){
     const today = new Date();
     var mins = today.getMinutes();
+    var hours = today.getHours();
+    var am = "AM";
     if (mins < 10) {
         mins = "0" + mins;
     }
-    var hours = today.getHours() - 12;
-    var am = "AM";
-    if (today.getHours() > 12){
+    if (hours > 12){
+        hours = today.getHours() - 12;
         am = "PM";
     }
     var time = hours + ":" + mins + " " + am;
@@ -178,7 +179,7 @@ h4.card-title {
     font-family: Roboto, sans-serif;
     font-weight: 300;
     line-height: 1.5;
-    margin-bottom: 0;
+    margin: 10px 0 0 10px;
     padding: 15px 20px;
     border-bottom: 1px solid rgba(77, 82, 89, 0.07);
 }
@@ -346,7 +347,7 @@ span.date {
 }
 
 .publisher-input::placeholder {
-    color: white;
+    color: #c0bfbf;
 }
 
 button,
