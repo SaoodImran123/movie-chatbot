@@ -27,6 +27,7 @@ export default {
 html{
   font-family: Segoe UI;
   font-size: 14px;
+  background: #061E3E;
 }
 
 * {

@@ -101,11 +101,9 @@ export default {
 }
 
 .card {
-    border: 1px solid #bebdbd;
-    border-radius: 0px;
     margin-bottom: 30px;
     -webkit-box-shadow: 0 2px 3px rgba(0, 0, 0, 0.03);
-    box-shadow: 0 2px 3px rgba(0, 0, 0, 0.03);
+    box-shadow: 0 5px 5px rgba(0, 0, 0, .30);
     -webkit-transition: .5s;
     transition: .5s
 }
