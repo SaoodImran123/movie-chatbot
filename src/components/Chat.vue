@@ -88,6 +88,7 @@ export default {
     },
     mounted() {
         this.socket.on('MESSAGE', (data) => {
+            console.log(data);
             this.messages = [...this.messages, data];
         });
     }
