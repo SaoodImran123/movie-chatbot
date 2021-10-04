@@ -3,7 +3,6 @@
     <div class="container">
       <div class="row">
         <div class="col-md-6 offset-md-3">
-          <LandingPage />
           <Poster imgsrc="
 https://image.tmdb.org/t/p/original/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg" title="Venom" runTime="2hrs 30" :purchasable="true"></Poster>
           <Chat />
@@ -15,13 +14,11 @@ https://image.tmdb.org/t/p/original/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg" title="Veno
 
 <script>
 import Chat from './components/Chat.vue'
-import LandingPage from './components/LandingPage.vue'
 import Poster from './components/Poster.vue'
 
 export default {
   components: {
     Chat,
-    LandingPage,
     Poster
   }
 }
