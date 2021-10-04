@@ -1,4 +1,6 @@
 const express = require('express');
+const {spawn} = require('child_process');
+const pyshell = require('python-shell');
 const path = require('path');
 const app = express();
 var port = 3050;
@@ -21,3 +23,14 @@ io.on('connection', function(socket) {
         // return back to client
     });
 });
+
+app.get('/nlp', (req, res)=>{
+  var sendData;
+  const spawn = require("child_process").spawn;
+  const pythonProcess = spawn('python3',["./test.py"]);
+  pythonProcess.stdout.on('data', (data) => {
+    console.log(data);
+    sendData = data;
+  });
+  res.send(pythonProcess);
+})
