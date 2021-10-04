@@ -1,6 +1,12 @@
 import nltk
+import sys
 
-sentence = """I want to see a movie with no gore and violence but has a high school setting like diary of a bully"""
+#print('#Hello from python#')
+#print('First param:'+sys.argv[1]+'#')
+
+sentence = sys.argv[1]
+
+#sentence = """I want to see a movie with no gore and violence but has a high school setting like diary of a bully"""
 
 """
 NOTICE: requires Python 3.7.4, pip
@@ -13,11 +19,11 @@ TODO:
 
 tokens = nltk.word_tokenize(sentence)
 
-print(tokens)
+# print(tokens)
 
 tokens_tag = nltk.pos_tag(tokens)
 
-print(tokens_tag)
+# print(tokens_tag)
 
 is_adj = lambda pos: pos[:2] == 'JJ'
 is_adj_comp = lambda pos: pos[:2] == 'JJR'
@@ -28,13 +34,14 @@ comp_adjs = [word for (word, pos) in tokens_tag if is_adj_comp(pos)]
 super_adjs = [word for (word, pos) in tokens_tag if is_adj_super(pos)]
 proper_nouns = [word for (word, pos) in tokens_tag if pos == 'NNP']
 
-print(adjs)
-print(comp_adjs)
-print(super_adjs)
-print(proper_nouns)
+
+print({'''adjs''': adjs})
+# print(comp_adjs)
+# print(super_adjs)
+print({'''proper_nouns''': proper_nouns})
 
 grammar = "NP: {<JJ>*<NN><CC>?<IN>?<DT>?<JJ>*<NN>?}"
 cp = nltk.RegexpParser(grammar)
 result = cp.parse(tokens_tag)
 
-print(result)
+#print(result)
