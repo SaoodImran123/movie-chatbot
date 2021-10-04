@@ -152,7 +152,7 @@ h4.card-title {
 }
 
 #chat-content{
-    overflow: hidden;
+    overflow: scroll;
     height:400px;
     background-color: #851E3E;
 }
@@ -181,17 +181,6 @@ h4.card-title {
     margin: 10px 0 0 10px;
     padding: 15px 20px;
     border-bottom: 1px solid rgba(77, 82, 89, 0.07);
-}
-
-.ps-container {
-    position: relative
-}
-
-.ps-container {
-    -ms-touch-action: auto;
-    touch-action: auto;
-    overflow: hidden !important;
-    -ms-overflow-style: none
 }
 
 .media .avatar {
