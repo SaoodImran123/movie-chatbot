@@ -1,9 +1,9 @@
 const express = require('express');
 const {spawn} = require('child_process');
-const pyshell = require('python-shell');
 const path = require('path');
 const app = express();
 var port = 3050;
+let {PythonShell} = require('python-shell')
 
 const server = app.listen(port, function() {
     console.log('server running on port ' + port);
@@ -25,12 +25,28 @@ io.on('connection', function(socket) {
 });
 
 app.get('/nlp', (req, res)=>{
-  var sendData;
-  const spawn = require("child_process").spawn;
-  const pythonProcess = spawn('python3',["./test.py"]);
-  pythonProcess.stdout.on('data', (data) => {
-    console.log(data);
-    sendData = data;
-  });
-  res.send(pythonProcess);
+  return new Promise(async function(resolve, reject){
+    let r =  await runPy()
+    console.log(JSON.parse(JSON.stringify(r.toString())), "Done...!@")//Approach to parse string to JSON.
+    res.send(r)
+  })
 })
+
+
+function runPy(){
+  return new Promise(async function(resolve, reject){
+    let options = {
+      mode: 'text',
+      pythonOptions: ['-u'],
+      scriptPath: '/Users/yale/Documents/workspace/capstone/movie-chatbot/server',//Path to your script
+      args: [JSON.stringify({"name": ["xyz", "abc"], "age": ["28","26"]})]//Approach to send JSON as when I tried 'json' in mode I was getting error.
+    };
+
+    await PythonShell.run('sentence_parse.py', options, function (err, results) {
+      //On 'results' we get list of strings of all print done in your py scripts sequentially. 
+      if (err) throw err;
+      console.log('results: ' + results);
+      resolve(results)//I returned only JSON(Stringified) out of all string I got from py script
+   });
+ })
+} 
