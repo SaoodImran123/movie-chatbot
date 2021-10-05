@@ -13,14 +13,22 @@
                         </div>
                         <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
                             <div class="media-body">
-                                <p>Hi. How can I help you?</p>
+                                <p>Hi. What kind of movies do you like?</p>
                                 <p class="meta"><time datetime="2021">{{ this.createdTime }}</time></p> 
                             </div>
                         </div>
-                        <div class="media media-chat media-chat-reverse">
-                            <div class="media-body"  v-for="(msg, index) in messages" :key="index">
-                                <p>{{ msg.message }}</p>
-                                <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
+                        <div v-for="(msg, index) in messages" :key="index">
+                            <div class="media media-chat media-chat-reverse">
+                                <div class="media-body">
+                                    <p>{{ msg.message }}</p>
+                                    <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
+                                </div>
+                            </div>
+                            <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                                <div class="media-body">
+                                    <p>{{ msg.bot_message }}</p>
+                                    <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -68,7 +76,8 @@ export default {
             messages: [],
             time: '',
             createdTime: '',
-            socket : io('ws://localhost:3050')
+            socket : io('ws://localhost:3050'),
+            botMessages: []
         }
     },
     methods: {
@@ -91,6 +100,11 @@ export default {
             console.log(data);
             this.messages = [...this.messages, data];
         });
+    },
+    updated(){
+        var textboxes = document.getElementsByClassName("media-chat");
+        var obj = textboxes[textboxes.length - 1];
+        obj.scrollIntoView();
     }
 }
 </script>
@@ -285,7 +299,6 @@ span.date {
 }
 
 .media-chat.media-chat-reverse {
-    float: right;
     -webkit-box-orient: horizontal;
     -webkit-box-direction: reverse;
     flex-direction: row-reverse
@@ -296,7 +309,8 @@ span.date {
 }
 
 .media-chat.media-chat-reverse .media-body{
-    width: 80%;
+    width: 90%;
+    float: right;
 }
 
 .media-chat.media-chat-reverse .media-body p {

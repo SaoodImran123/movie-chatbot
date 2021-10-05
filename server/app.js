@@ -22,10 +22,8 @@ io.on('connection', function(socket) {
       return new Promise(async function(resolve, reject){
         let tokens = await runPy(data.message)
         console.log("tokens: " + tokens)
+        data.bot_message = tokens.toString();
         io.emit('MESSAGE', data);
-        io.emit('MESSAGE', 
-          {'message': tokens.toString()} 
-        );
       })
         // send nlp 
         // return back to client
