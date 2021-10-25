@@ -44,7 +44,7 @@ function runPy(sentence){
       mode: 'text',
       pythonOptions: ['-u'],
       scriptPath: './server',//Path to your script
-      args: [JSON.stringify({"sentence": sentence})]//Approach to send JSON as when I tried 'json' in mode I was getting error.
+      args: [sentence]//Approach to send JSON as when I tried 'json' in mode I was getting error.
     };
 
     await PythonShell.run('sentence_parse.py', options, function (err, results) {
