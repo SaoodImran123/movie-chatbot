@@ -3,8 +3,7 @@
     <div class="container">
       <div class="row">
         <div class="col-md-6 offset-md-3">
-          <Poster imgsrc="
-https://image.tmdb.org/t/p/original/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg" title="Venom" runTime="2hrs 30" :purchasable="true"></Poster>
+          <Catalog :posterDataOne=posterD :posterDataTwo=posterDtwo :posterDataThree=posterDthree />
           <Chat />
         </div>
       </div>
@@ -14,12 +13,35 @@ https://image.tmdb.org/t/p/original/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg" title="Veno
 
 <script>
 import Chat from './components/Chat.vue'
-import Poster from './components/Poster.vue'
+import Catalog from './components/Catalog.vue'
 
 export default {
   components: {
     Chat,
-    Poster
+    Catalog
+  },
+  data: function(){
+    return{
+      posterD: "",
+      posterDtwo: "",
+      posterDthree: ""
+    }
+  },
+
+  methods: {
+    generateCatalog: function(){
+      let Posterdata = {image:"https://image.tmdb.org/t/p/original/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg", title:"Venom", runTime:"2hr 30m", purchasable:true};
+      this.posterD = JSON.parse(JSON.stringify(Posterdata));
+      this.posterDtwo = JSON.parse(JSON.stringify(Posterdata));
+      this.posterDthree = JSON.parse(JSON.stringify(Posterdata));
+      this.posterD.image = "https://mediafiles.cineplex.com/Central/Film/Posters/32523_background_750_450.jpg";
+      console.log(this.posterDtwo)
+
+
+   }
+  },
+  created: function(){
+    this.generateCatalog()
   }
 }
 

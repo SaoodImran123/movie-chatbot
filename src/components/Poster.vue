@@ -1,16 +1,10 @@
 <template>
 
     <div class="poster">
-    <div>
-    <div>
     <img :src=imgsrc>
-    <h2 class="text-yellow-400">{{title}}</h2>
-    </div>
-    <h3 class="text-yellow-400">{{runTime}}</h3>
-    </div>
-    <button  v-if="purchasable==true" class="bg-blue-900 hover:bg-blue-700 text-yellow-400 font-bold py-2 px-4 rounded">
-  Purchase Tickets
-    </button>
+    <h1 class="title">{{title}}</h1>
+    <p class="runtime">{{runTime}}</p>
+    <button  v-if="purchasable==true">Purchase Tickets</button>
     </div>
 
     
@@ -30,20 +24,44 @@ export default {
             type: String,
         },
         purchasable: {
-            type: String,
+            type: Boolean,
         },
     }
     
 }
 </script>
-<style>
+<style scoped>
 .poster{
-    text-align: justify;
-    width: 250px;
-}
-img{
-    display: block;
-    width: 250px;
-}
+    max-width: 200px;
+    font-family: arial;
+    background: transparent;
 
+}
+.runtime{
+    color: #F6CD61;
+    font-size: 18px;
+    text-align: left;
+    margin-bottom: 10px;
+}
+.title{
+    color:#F6CD61;
+    font-size:22px;
+    text-align: left;
+}
+.poster button{
+    border: none;
+    outline: 0;
+    padding: 12px;
+    color: black;
+    background-color:#061E3E;
+    color: #F6CD61;
+    text-align: center;
+    cursor: pointer;
+    width: 80%;
+    font-size: 14px;
+    
+}
+.poster button:hover{
+    opacity: 0.7;
+}
 </style>
