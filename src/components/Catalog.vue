@@ -51,28 +51,30 @@ export default {
 </script>
 <style scoped>
 .catalog{
-    width: 950px;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
     background:#19365B;
     padding-left: 35px;
     padding-right: 35px;
+    margin: 50px;
+}
+.mainposter{
+    margin: 30px;
+    height: 100%;
 }
 .row{
     display: flex;
 }
 .column{
-    flex: 33.33%;
-    padding-right: 5px;
-    padding-bottom: 5px;
+    flex: 25%;
+    padding-right: 40px;
+    padding-bottom: 15px;
+    padding-top: 15px;
 }
 .title{
     text-align: center;
     margin-bottom: 10px;
     font-size: 40px;
     color: #F6CD61;
-}
-.main-poster{
-    height: 100%;
 }
 .showing-in{
     color: #F6CD61;

@@ -1,11 +1,11 @@
 <template>
   <div id="app">
-    <div class="container">
+    <div class="con">
       <div class="row">
-        <div class="col-md-6 offset-md-3">
+        <div class="column1">
           <Catalog :posterDataOne=posterD :posterDataTwo=posterDtwo :posterDataThree=posterDthree />
         </div>
-        <div class="col-md-6 offset-md-3">
+        <div class="column2">
           <Chat />
         </div>
       </div>
@@ -36,7 +36,7 @@ export default {
       this.posterD = JSON.parse(JSON.stringify(Posterdata));
       this.posterDtwo = JSON.parse(JSON.stringify(Posterdata));
       this.posterDthree = JSON.parse(JSON.stringify(Posterdata));
-      this.posterD.image = "https://mediafiles.cineplex.com/Central/Film/Posters/32523_background_750_450.jpg";
+      this.posterD.image = "https://image.tmdb.org/t/p/original/eENEf62tMXbhyVvdcXlnQz2wcuT.jpg";
       console.log(this.posterDtwo)
 
 
@@ -73,5 +73,11 @@ html{
 }
 .row{
     display: flex;
+}
+.column1{
+    flex: 70%;
+}
+.column2{
+    flex: 30%;
 }
 </style>

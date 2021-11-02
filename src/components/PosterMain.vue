@@ -2,7 +2,7 @@
 
     <div class="poster">
     <div class="row">
-        <div>
+        <div class="img-container">
         <img class="movieposter" :src=imgsrc>
         </div>
         <div class="poster-info">
@@ -51,19 +51,16 @@ export default {
     background: #041224;
     text-align: left;
     color: white;
-
 }
 
 .title{
     color:#fa3030;
     font-size:22px;
-    height: 8%;
     font-weight: bold;
 }
 .runtime{
     color: #FB6A69;
     font-size: 18px;
-    height: 5%;
 }
 .synopsis-title{
     height:5%;
@@ -73,11 +70,9 @@ export default {
 }
 .synopsis{
     color: #FB6A69;
-    width: 183.4px;
-    height: 50%;
+    width:100%;
 }
 .directors{
-
     color: #FB6A69;
     padding-top: 10px;
 }
@@ -109,13 +104,15 @@ export default {
 .row{
     display: flex;
 }
+.img-container{
+    width: 100%;
+}
 .movieposter{
     padding-right: 10px;
-    height: 100%;
-
 }
 .poster-info{
-    width: 220px;
+    width: 300px;
+    padding: 5px;
 }
 
 </style>

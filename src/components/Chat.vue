@@ -1,46 +1,44 @@
 <template>
 <div class="page-content page-container" id="page-content">
     <div class="padding">
-        <div class="row container d-flex justify-content-center">
-            <div class="col-md-6">
-                <div class="card card-bordered">
-                    <div class="card-header">
-                        <h4 class="card-title"><strong>Chat</strong></h4>
+        <div class="col-md-6">
+            <div class="card card-bordered">
+                <div class="card-header">
+                    <h4 class="card-title"><strong>Chat</strong></h4>
+                </div>
+                <div class="container-sm" id="chat-content">
+                    <div class="date-header">
+                        <span class="date">{{ this.createdDate }}</span> 
                     </div>
-                    <div class="container-sm" id="chat-content">
-                        <div class="date-header">
-                            <span class="date">{{ this.createdDate }}</span> 
+                    <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                        <div class="media-body">
+                            <p>Hi. What kind of movies do you like?</p>
+                            <p class="meta"><time datetime="2021">{{ this.createdTime }}</time></p> 
+                        </div>
+                    </div>
+                    <div v-for="(msg, index) in messages" :key="index">
+                        <div class="media media-chat media-chat-reverse">
+                            <div class="media-body">
+                                <p>{{ msg.message }}</p>
+                                <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
+                            </div>
                         </div>
                         <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
                             <div class="media-body">
-                                <p>Hi. What kind of movies do you like?</p>
-                                <p class="meta"><time datetime="2021">{{ this.createdTime }}</time></p> 
-                            </div>
-                        </div>
-                        <div v-for="(msg, index) in messages" :key="index">
-                            <div class="media media-chat media-chat-reverse">
-                                <div class="media-body">
-                                    <p>{{ msg.message }}</p>
-                                    <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
+                                <p>{{ msg.bot_message }}</p>
+                                <div class="guided"  v-for="(question, i) in msg.guided_ans" :key="i">
+                                    <button :class="['button recommendation'+ (i+1), {hide: messages.length > index + 1}]" v-on:click="sendMessage($event, question)">{{question}}</button>  
                                 </div>
-                            </div>
-                            <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
-                                <div class="media-body">
-                                    <p>{{ msg.bot_message }}</p>
-                                    <div class="guided"  v-for="(question, i) in msg.guided_ans" :key="i">
-                                        <button :class="['button recommendation'+ (i+1), {hide: messages.length > index + 1}]" v-on:click="sendMessage($event, question)">{{question}}</button>  
-                                    </div>
-                                    <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
-                                </div>
+                                <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
                             </div>
                         </div>
                     </div>
-                    <div class="publisher"> 
-                        <form @submit.prevent="sendMessage">
-                        <input class="publisher-input form-control" type="text" v-model="message" placeholder="Write something"> 
-                        <button type="submit" class="publisher-btn text-info"><i class="fa fa-paper-plane"></i></button>
-                        </form>
-                    </div>
+                </div>
+                <div class="publisher"> 
+                    <form @submit.prevent="sendMessage">
+                    <input class="publisher-input form-control" type="text" v-model="message" placeholder="Write something"> 
+                    <button type="submit" class="publisher-btn text-info"><i class="fa fa-paper-plane"></i></button>
+                    </form>
                 </div>
             </div>
         </div>
@@ -104,6 +102,7 @@ export default {
         });
     },
     updated(){
+        // TODO: Fix auto scroll
         var textboxes = document.getElementsByClassName("media-chat");
         var obj = textboxes[textboxes.length - 1];
         obj.scrollIntoView();
@@ -113,8 +112,8 @@ export default {
 
 <style scoped>
 .card-bordered {
-    float: right;
-    width: 400px;
+    width: 500px;
+    margin-top: 50px;
 }
 
 .card {
@@ -123,10 +122,6 @@ export default {
     box-shadow: 0 5px 5px rgba(0, 0, 0, .30);
     -webkit-transition: .5s;
     transition: .5s
-}
-
-.padding {
-    padding: 3rem !important
 }
 
 body {
@@ -356,7 +351,7 @@ span.date {
     border: none;
     outline: none !important;
     background-color: transparent;
-    min-width: 340px;
+    min-width: 450px;
     color: white;
 }
 

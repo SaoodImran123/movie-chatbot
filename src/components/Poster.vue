@@ -1,13 +1,10 @@
 <template>
-
     <div class="poster">
-    <img :src=imgsrc>
-    <h1 class="title">{{title}}</h1>
-    <p class="runtime">{{runTime}}</p>
-    <button  v-if="purchasable==true">Purchase Tickets</button>
+        <img :src=imgsrc>
+        <h1 class="title">{{title}}</h1>
+        <p class="runtime">{{runTime}}</p>
+        <button  v-if="purchasable==true">Purchase Tickets</button>
     </div>
-
-    
 </template>
 <script>
 export default {
@@ -32,7 +29,7 @@ export default {
 </script>
 <style scoped>
 .poster{
-    max-width: 200px;
+    width: 100%;
     font-family: arial;
     background: transparent;
 
@@ -64,4 +61,5 @@ export default {
 .poster button:hover{
     opacity: 0.7;
 }
+
 </style>
