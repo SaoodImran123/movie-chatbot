@@ -59,7 +59,7 @@ export default {
     cursor: pointer;
     width: 80%;
     font-size: 14px;
-    
+    font-weight: bold;
 }
 .poster button:hover{
     opacity: 0.7;

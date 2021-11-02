@@ -52,12 +52,15 @@ function runPy(sentence){
 
     await PythonShell.run('sentence_parse.py', options, function (err, results) {
       //On 'results' we get list of strings of all print done in your py scripts sequentially. 
+      let tokens = [];
       if (err) throw err;
       console.log('results: ');
-      for(let i of results){
-        console.log(i, "---->", typeof i)
+      if(results && results.length>0){
+        for(let i of results){
+          tokens.push(i);
+        }
       }
-      resolve(results)//I returned only JSON(Stringified) out of all string I got from py script
+      resolve(tokens)
    });
   })
 } 
@@ -76,18 +79,77 @@ const io = require('socket.io')(server, {
 
 io.on('connection', function(socket) {
     console.log(socket.id)
+    var requirements = {genre: [], release_date: [], occassion:[], mood: []};
     socket.on('SEND_MESSAGE', function(data) {
       var tokens;
       return new Promise(async function(resolve, reject){
-        let tokens = await runPy(data.message)
-        console.log("tokens: " + tokens)
-        data.bot_message = tokens.toString();
+        let tokens = await runPy(data.message);
+        // Check tokens if fullfil a condition
+        console.log(tokens);
+        requirements = checkRequirements(tokens, requirements);
+        if(requirements.genre.length == 0){
+          data.bot_message = "What kind of genre are you feeling right now?";
+          data.guided_ans = ["I want action movies", "I want comedy movies", "I want horror movies"];
+        }
+        else if(requirements.release_date.length == 0){
+          data.bot_message = "Do you have any preference on how old the movie is?";
+          data.guided_ans = ["I want movies released in the past year", "I want movies released in the last 10 years", "I don't have a preference"];
+        }
+        else if(requirements.occassion.length == 0){
+          data.bot_message = "Why do you want to watch a movie?";
+          data.guided_ans = ["Movie night with family", "Date night", "I'm just bored"];
+        }
+        else if(requirements.mood.length == 0){
+          data.bot_message = "How are you feeling today?";
+          data.guided_ans = ["I am happy", "I am sad", "I am bored"];
+        }
+        else{
+          data.bot_message = "Are you content with your recommendation?";
+          data.guided_ans = ["Yes", "No"];
+        }
+
+        // TODO: Pass tokens to something so we can query
+
+        // Return data to chatbot
         io.emit('MESSAGE', data);
       })
         // send nlp 
         // return back to client
     });
 });
+
+// Placeholder to test guided answers
+// TODO: get requirements from tokens
+function checkRequirements(tokens, req){
+  var genres = [ "action", "adventure","animation","comedy","crime","documentary","drama","family","fantasy","history","horror","music","mystery","romance","science fiction","sci-fi","thriller","war","western"];
+  for(var i = 0; i < tokens.length; i++){
+    // Check if message has the genre wanted
+    for(var j = 0; j < genres.length; j++){
+      // Check if token has the genre
+      if(tokens[i].includes(genres[j])){
+        req.genre.push(genres[j]);
+      }  
+    }
+
+    // Check if tokens have release date
+    if(tokens[i].includes("released")){
+      req.release_date.push(tokens[i]);
+    }
+
+    // Check if tokens have occassion
+    if(tokens[i].includes("date night")){
+      req.occassion.push(tokens[i]);
+    }
+
+    // Check if tokens have mood
+    if(tokens[i].includes("happy")){
+      req.mood.push(tokens[i]);
+    }
+  }
+
+  console.log(req);
+  return req;
+}
 
 
 // ROUTING

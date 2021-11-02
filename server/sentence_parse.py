@@ -67,4 +67,5 @@ r.extract_keywords_from_text(sentence)
 
 # To get keyword phrases ranked highest to lowest with scores.
 result = r.get_ranked_phrases()
-print(result)
+for token in result:
+    print(token)

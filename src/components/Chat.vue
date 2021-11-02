@@ -27,6 +27,9 @@
                             <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
                                 <div class="media-body">
                                     <p>{{ msg.bot_message }}</p>
+                                    <div class="guided"  v-for="(question, i) in msg.guided_ans" :key="i">
+                                        <button :class="['button recommendation'+ (i+1), {hide: messages.length > index + 1}]" v-on:click="sendMessage($event, question)">{{question}}</button>  
+                                    </div>
                                     <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
                                 </div>
                             </div>
@@ -76,16 +79,15 @@ export default {
             messages: [],
             time: '',
             createdTime: '',
-            socket : io('ws://localhost:3050'),
-            botMessages: []
+            socket : io('ws://localhost:3050')
         }
     },
     methods: {
-        sendMessage(e) {
+        sendMessage(e, msg) {
             this.time = getCurrentTime();
             e.preventDefault();
             this.socket.emit('SEND_MESSAGE', {
-                message: this.message,
+                message: msg || this.message,
                 time: this.time
             });
             this.message = ''
@@ -245,6 +247,7 @@ h4.card-title {
     opacity: 0.8;
     font-size: 14px;
 }
+
 div.date-header{
     width: 100%; 
     margin-top: 10px;
@@ -258,44 +261,10 @@ span.date {
     font-size: 14px;
 }
 
-.media-meta-day {
-    -webkit-box-pack: justify;
-    justify-content: space-between;
-    -webkit-box-align: center;
-    align-items: center;
-    margin-bottom: 0;
-    color: #8b95a5;
-    opacity: .8;
-    font-weight: 400
-}
-
 .media {
     padding: 0 12px 0 12px;
     -webkit-transition: background-color .2s linear;
     transition: background-color .2s linear
-}
-
-.media-meta-day::before {
-    margin-right: 16px
-}
-
-.media-meta-day::before,
-.media-meta-day::after {
-    content: '';
-    -webkit-box-flex: 1;
-    flex: 1 1;
-    border-top: 1px solid #ebebeb
-}
-
-.media-meta-day::after {
-    content: '';
-    -webkit-box-flex: 1;
-    flex: 1 1;
-    border-top: 1px solid #ebebeb
-}
-
-.media-meta-day::after {
-    margin-left: 16px
 }
 
 .media-chat.media-chat-reverse {
@@ -318,6 +287,49 @@ span.date {
     clear: right;
     background-color: #48b0f7;
     color: #fff
+}
+
+.button {
+  background-color: white; 
+  border: none;
+  color: black; 
+  border: 1px solid #008CBA;
+  width: 100%;
+  padding: 2px;
+  padding-left: 10px;
+  padding-right: 10px;
+  text-decoration: none;
+  transition-duration: 0.4s;
+  cursor: pointer;
+  float: left;
+  clear: left;
+  text-align: left;
+}
+
+.button.hide{
+  display: none;
+}
+
+.button:hover {
+  background-color: #008CBA;
+  color: white;
+}
+
+.media-chat.media-chat-reverse .button {
+    float: right;
+    clear: right;
+}
+
+.button.recommendation1{
+    border-radius: 5px 5px 0 0;
+}
+
+.button.recommendation2{
+    border-radius: 0; 
+}
+
+.button.recommendation3{
+    border-radius: 0 0 5px 5px;
 }
 
 .publisher {
