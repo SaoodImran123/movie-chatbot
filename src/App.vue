@@ -4,6 +4,8 @@
       <div class="row">
         <div class="col-md-6 offset-md-3">
           <Catalog :posterDataOne=posterD :posterDataTwo=posterDtwo :posterDataThree=posterDthree />
+        </div>
+        <div class="col-md-6 offset-md-3">
           <Chat />
         </div>
       </div>
@@ -68,5 +70,8 @@ html{
 }
 *::-webkit-scrollbar {
     display: none; /* for Chrome, Safari, and Opera */
+}
+.row{
+    display: flex;
 }
 </style>
