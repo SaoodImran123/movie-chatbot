@@ -6,37 +6,86 @@ const routes = require("./api/routes")
 var port = 3050;
 
 // DATABASE
-const mongoose = require("mongoose");
-var mongoDB = 'mongodb://Node:NtiEzkYS8S@143.198.38.75/movezen'
-mongoose.connect(mongoDB, {useNewUrlParser: true, useUnifiedTopology: true});
+// const mongoose = require("mongoose");
+// var mongoDB = 'mongodb://Node:NtiEzkYS8S@143.198.38.75/movezen'
+// mongoose.connect(mongoDB, {useNewUrlParser: true, useUnifiedTopology: true});
 
-var db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
+// var db = mongoose.connection;
+// db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
-//Define a schema
-var Schema = mongoose.Schema;
-
-var MovieModelSchema = new Schema({
-  genre: String,
-  popularity_date: Number
+// Elastic Search
+var elasticsearch = require('elasticsearch');
+var client = new elasticsearch.Client({
+   hosts: [ 'http://elastic:tSsrpzP3nj3yFS3OgD9s@[2604:a880:cad:d0::e15:a001]:9200']
 });
 
-var MovieModel = mongoose.model('MovieModel', MovieModelSchema );
+client.ping({
+  requestTimeout: 30000,
+}, function(error) {
+  if (error) {
+      console.error('elasticsearch cluster is down!');
+  } else {
+      console.log('Elastic search returned ping. Everything is ok');
+  }
+});
 
-MovieModel.find(
-  {
-    title: RegExp("shang.*", 'i'),
-    popularity: {$gt: 5}
-  },
-  'title',
-  function(err, MovieModel){
-    if(err) {
-      return console.log(err);
-    } else{
-      console.log(MovieModel.toString());
+
+// Index: same as mongodb but lower case
+client.search({
+  index: 'tmdb_movies',
+  size: '3',
+  // sort : [
+  //   { "popularity": {"order" : "desc"}}
+  // ],
+  body:{
+    query: {
+      bool: {
+        must: {
+          multi_match: {
+            query: "comedy",
+            fields: [
+                "genres.name"
+            ]
+          }
+        },
+        filter: {
+          term: {
+              "original_language": "en"
+          }
+        }
+      }
     }
   }
-)
+}).then(function(resp) {
+  console.log(resp);
+}, function(err) {
+  console.trace(err.message);
+});
+
+//Define a schema
+// var Schema = mongoose.Schema;
+
+// var MovieModelSchema = new Schema({
+//   genre: String,
+//   popularity_date: Number
+// });
+
+// var MovieModel = mongoose.model('MovieModel', MovieModelSchema );
+
+// MovieModel.find(
+//   {
+//     title: RegExp("shang.*", 'i'),
+//     popularity: {$gt: 5}
+//   },
+//   'title',
+//   function(err, MovieModel){
+//     if(err) {
+//       return console.log(err);
+//     } else{
+//       console.log(MovieModel.toString());
+//     }
+//   }
+// )
 
 // PYTHON SCRIPT
 let {PythonShell} = require('python-shell')
