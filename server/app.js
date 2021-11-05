@@ -31,36 +31,48 @@ client.ping({
 
 
 // Index: same as mongodb but lower case
-client.search({
-  index: 'tmdb_movies',
-  size: '3',
-  // sort : [
-  //   { "popularity": {"order" : "desc"}}
-  // ],
-  body:{
-    query: {
-      bool: {
-        must: {
-          multi_match: {
-            query: "comedy",
-            fields: [
-                "genres.name"
-            ]
-          }
-        },
-        filter: {
-          term: {
-              "original_language": "en"
+var elasticSearchGenre = function (genre){
+  return new Promise(function(resolve, reject){
+    client.search({
+      index: 'tmdb_movies',
+      size: '3',
+      // sort : [
+      //   { "popularity": {"order" : "desc"}}
+      // ],
+      body:{
+        query: {
+          bool: {
+            must: {
+              multi_match: {
+                query: genre.toString(),
+                fields: [
+                    "genres.name"
+                ]
+              }
+            },
+            filter: {
+              term: {
+                  "original_language": "en"
+              }
+            }
           }
         }
       }
-    }
-  }
-}).then(function(resp) {
-  console.log(resp);
-}, function(err) {
-  console.trace(err.message);
-});
+    }).then(function(resp) {
+      console.log(resp);
+      //resturns an array of movie hits
+      resolve(resp.hits.hits);
+    }, function(err) {
+      reject(err.message);
+      console.trace(err.message);
+    });
+  })
+}
+
+
+
+//elasticSearchGenre("horror");
+
 
 //Define a schema
 // var Schema = mongoose.Schema;
@@ -157,7 +169,12 @@ io.on('connection', function(socket) {
           data.guided_ans = ["Yes", "No"];
         }
 
-        // TODO: Pass tokens to something so we can query
+        // TODO: check for what type of input and search by that type
+        elasticSearchGenre(tokens).then(
+          result=>showESResult(result),
+          error=>console.log(error)
+        )
+
 
         // Return data to chatbot
         io.emit('MESSAGE', data);
@@ -166,6 +183,14 @@ io.on('connection', function(socket) {
         // return back to client
     });
 });
+
+function showESResult(result){
+  let data = {
+    bot_message: "I recommend " + result[0]._source.title + ", " + result[1]._source.title + ", and " + result[2]._source.title
+  }
+  io.emit('MESSAGE', data)
+}
+
 
 // Placeholder to test guided answers
 // TODO: get requirements from tokens
