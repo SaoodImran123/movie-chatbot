@@ -31,7 +31,7 @@ client.ping({
 
 
 // Index: same as mongodb but lower case
-var elasticSearchGenre = function (genre){
+var elasticSearchGenre = function (genre, data){
   return new Promise(function(resolve, reject){
     client.search({
       index: 'tmdb_movies',
@@ -61,7 +61,8 @@ var elasticSearchGenre = function (genre){
     }).then(function(resp) {
       console.log(resp);
       //resturns an array of movie hits
-      resolve(resp.hits.hits);
+      data.response = resp.hits.hits;
+      resolve(data);
     }, function(err) {
       reject(err.message);
       console.trace(err.message);
@@ -151,33 +152,33 @@ io.on('connection', function(socket) {
         if(requirements.genre.length == 0){
           data.bot_message = "What kind of genre are you feeling right now?";
           data.guided_ans = ["I want action movies", "I want comedy movies", "I want horror movies"];
+          io.emit('MESSAGE', data);
         }
-        else if(requirements.release_date.length == 0){
-          data.bot_message = "Do you have any preference on how old the movie is?";
-          data.guided_ans = ["I want movies released in the past year", "I want movies released in the last 10 years", "I don't have a preference"];
-        }
-        else if(requirements.occassion.length == 0){
-          data.bot_message = "Why do you want to watch a movie?";
-          data.guided_ans = ["Movie night with family", "Date night", "I'm just bored"];
-        }
-        else if(requirements.mood.length == 0){
-          data.bot_message = "How are you feeling today?";
-          data.guided_ans = ["I am happy", "I am sad", "I am bored"];
-        }
+        // else if(requirements.release_date.length == 0){
+        //   data.bot_message = "Do you have any preference on how old the movie is?";
+        //   data.guided_ans = ["I want movies released in the past year", "I want movies released in the last 10 years", "I don't have a preference"];
+        // }
+        // else if(requirements.occassion.length == 0){
+        //   data.bot_message = "Why do you want to watch a movie?";
+        //   data.guided_ans = ["Movie night with family", "Date night", "I'm just bored"];
+        // }
+        // else if(requirements.mood.length == 0){
+        //   data.bot_message = "How are you feeling today?";
+        //   data.guided_ans = ["I am happy", "I am sad", "I am bored"];
+        // }
+        // else{
+        //   data.bot_message = "Are you content with your recommendation?";
+        //   data.guided_ans = ["Yes", "No"];
+        // }
         else{
-          data.bot_message = "Are you content with your recommendation?";
-          data.guided_ans = ["Yes", "No"];
+          // TODO: check for what type of input and search by that type
+          elasticSearchGenre(tokens, data).then(
+            result=>showESResult(result),
+            error=>console.log(error)
+          )
         }
 
-        // TODO: check for what type of input and search by that type
-        elasticSearchGenre(tokens).then(
-          result=>showESResult(result),
-          error=>console.log(error)
-        )
 
-
-        // Return data to chatbot
-        io.emit('MESSAGE', data);
       })
         // send nlp 
         // return back to client
@@ -185,10 +186,9 @@ io.on('connection', function(socket) {
 });
 
 function showESResult(result){
-  let data = {
-    bot_message: "I recommend " + result[0]._source.title + ", " + result[1]._source.title + ", and " + result[2]._source.title
-  }
-  io.emit('MESSAGE', data)
+  result.bot_message =  "I recommend " + result.response[0]._source.title + ", " + result.response[1]._source.title + ", and " + result.response[2]._source.title;
+  console.log(result);
+  io.emit('MESSAGE', result);
 }
 
 
@@ -196,15 +196,23 @@ function showESResult(result){
 // TODO: get requirements from tokens
 function checkRequirements(tokens, req){
   var genres = [ "action", "adventure","animation","comedy","crime","documentary","drama","family","fantasy","history","horror","music","mystery","romance","science fiction","sci-fi","thriller","war","western"];
-  
-  for(var j = 0; j < genres.length; j++){
-    // Check if token has the genre
-    tokens.find(v => function(){
-      if(v.includes(genres[j])){
+  for(var i = 0; i < tokens.length; i++){
+    // Check if message has the genre wanted
+    for(var j = 0; j < genres.length; j++){
+      // Check if token has the genre
+      if(tokens[i].includes(genres[j])){
         req.genre.push(genres[j]);
-      }
-    });
+      }  
+    }
   }
+  // for(var j = 0; j < genres.length; j++){
+  //   // Check if token has the genre
+  //   tokens.find(v => function(){
+  //     if(v.includes(genres[j])){
+  //       req.genre.push(genres[j]);
+  //     }
+  //   });
+  // }
 
   // for(var i = 0; i < tokens.length; i++){
 
