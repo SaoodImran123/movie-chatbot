@@ -171,30 +171,33 @@ io.on('connection', function(socket) {
 // TODO: get requirements from tokens
 function checkRequirements(tokens, req){
   var genres = [ "action", "adventure","animation","comedy","crime","documentary","drama","family","fantasy","history","horror","music","mystery","romance","science fiction","sci-fi","thriller","war","western"];
-  for(var i = 0; i < tokens.length; i++){
-    // Check if message has the genre wanted
-    for(var j = 0; j < genres.length; j++){
-      // Check if token has the genre
-      if(tokens[i].includes(genres[j])){
+  
+  for(var j = 0; j < genres.length; j++){
+    // Check if token has the genre
+    tokens.find(v => function(){
+      if(v.includes(genres[j])){
         req.genre.push(genres[j]);
-      }  
-    }
-
-    // Check if tokens have release date
-    if(tokens[i].includes("released")){
-      req.release_date.push(tokens[i]);
-    }
-
-    // Check if tokens have occassion
-    if(tokens[i].includes("date night")){
-      req.occassion.push(tokens[i]);
-    }
-
-    // Check if tokens have mood
-    if(tokens[i].includes("happy")){
-      req.mood.push(tokens[i]);
-    }
+      }
+    });
   }
+
+  // for(var i = 0; i < tokens.length; i++){
+
+  //   // Check if tokens have release date
+  //   if(tokens[i].includes("released")){
+  //     req.release_date.push(tokens[i]);
+  //   }
+
+  //   // Check if tokens have occassion
+  //   if(tokens[i].includes("date night")){
+  //     req.occassion.push(tokens[i]);
+  //   }
+
+  //   // Check if tokens have mood
+  //   if(tokens[i].includes("happy")){
+  //     req.mood.push(tokens[i]);
+  //   }
+  // }
 
   console.log(req);
   return req;
