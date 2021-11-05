@@ -105,7 +105,7 @@ export default {
         // TODO: Fix auto scroll
         var textboxes = document.getElementsByClassName("media-chat");
         var obj = textboxes[textboxes.length - 1];
-        obj.scrollIntoView();
+        obj.scrollIntoView({behavior: "smooth", block: "nearest"});
     }
 }
 </script>
