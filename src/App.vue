@@ -14,6 +14,7 @@
 </template>
 
 <script>
+const API_URL = "http://localhost:3050/";
 import Chat from './components/Chat.vue'
 import Catalog from './components/Catalog.vue'
 
@@ -46,7 +47,18 @@ export default {
   },
   created: function(){
     this.generateCatalog()
-  }
+  },
+  mounted() {
+    console.log(API_URL+'movies-default')
+    fetch(API_URL+'movies-default')
+      .then(response => {
+        return(response.json())
+      })
+      .then(result => {
+        // result holds an array of 5 of the most popular movies
+        console.log(result)
+      });
+  },
 }
 
 </script>

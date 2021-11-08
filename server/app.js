@@ -1,9 +1,21 @@
 const express = require('express');
+var cors = require('cors')
 // const {spawn} = require('child_process');
 // const path = require('path');
 const app = express();
+app.use(cors({
+  origin: 'http://localhost:8080'
+}))
+// app.use((req, res, next)=>{
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//   next();
+// });
+
+
 const routes = require("./api/routes")
 var port = 3050;
+
 
 // DATABASE
 // const mongoose = require("mongoose");
@@ -29,6 +41,30 @@ client.ping({
   }
 });
 
+var elasticSearchPopular = function (genre, data){
+  return new Promise(function(resolve, reject){
+    client.search({
+      index: 'tmdb_movies',
+      size: '5',
+      body:{
+        sort: [
+          {"vote_count": {"order" : "desc"}},
+          {"vote_average": {"order" : "desc"}}
+        ],
+        query: {
+          match_all: {}
+        }
+      }
+    }).then(function(resp) {
+      //resturns an array of movie hits
+      data = resp.hits.hits;
+      resolve(data);
+    }, function(err) {
+      reject(err.message);
+      console.trace(err.message);
+    });
+  })
+}
 
 // Index: same as mongodb but lower case
 var elasticSearchGenre = function (genre, data){
@@ -245,4 +281,16 @@ app.get('/nlp', (req, res)=>{
     console.log(JSON.parse(JSON.stringify(r.toString())), "Done...!@")//Approach to parse string to JSON.
     res.send(r)
   })
+})
+
+app.get('/movies-default', (req, res)=>{
+
+  console.log("api received")
+  elasticSearchPopular().then(
+    result=>{
+      //console.log(result)
+      res.json(result)
+    },
+    error=>res.send(error)
+  )
 })
