@@ -36,10 +36,11 @@ var elasticSearchGenre = function (genre, data){
     client.search({
       index: 'tmdb_movies',
       size: '3',
-      // sort : [
-      //   { "popularity": {"order" : "desc"}}
-      // ],
       body:{
+        sort: [
+          {"vote_count": {"order" : "desc"}},
+          {"vote_average": {"order" : "desc"}}
+        ],
         query: {
           bool: {
             must: {
