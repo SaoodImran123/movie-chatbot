@@ -35,7 +35,7 @@ var elasticSearchGenre = function (genre, data){
   return new Promise(function(resolve, reject){
     client.search({
       index: 'tmdb_movies',
-      size: '3',
+      size: '5',
       // sort : [
       //   { "popularity": {"order" : "desc"}}
       // ],

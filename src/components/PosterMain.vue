@@ -3,14 +3,14 @@
     <div class="poster">
     <div class="row">
         <div class="img-container">
-        <img class="movieposter" :src=imgsrc>
+        <img class="movieposter" :src=getImageSrc(data.backdrop_path)>
         </div>
         <div class="poster-info">
-                <h1 class="title">{{title}}</h1>
-                <p class="runtime">{{runTime}}</p>
+                <h1 class="title">{{data.title}}</h1>
+                <p class="runtime">{{getRuntime(data.runtime)}}</p>
                 <p class="synopsis-title">Synopsis</p>
-                <p class="synopsis">{{synopsis}}</p>
-                <p class="directors">Director: Alexander Warden </p>
+                <p class="synopsis">{{data.overview}}</p>
+                <p class="directors">Director: {{getDirector(data.crew)}} </p>
                 <div class="btn-container">
                 <button  v-if="purchasable==true">Purchase Tickets</button>
                 </div>
@@ -24,30 +24,40 @@
 export default {
     name: 'poster',
     props: {
-        synopsis:{
-            type: String,
-        },
-        title: {
-            type: String,
-        },
-        imgsrc: {
-            type: String,
-            required: true
-        },
-        runTime: {
-            type: String,
+        data: {
+            type: Object,
         },
         purchasable: {
             type: Boolean,
         },
-    }
+    },
+    methods: {
+        getDirector(crew){
+            if(crew){
+                for(var i = 0; i < crew; i++){
+                    if(crew[i].job == "Director"){
+                        return crew[i].name;
+                    }
+                }
+            }
+        },
+        getRuntime(runtime){
+            if(runtime && runtime > 0){
+                runtime = Math.floor(runtime/60) +"hr "+ runtime%60+ "m";
+            }
+
+            return runtime;
+        },
+        getImageSrc(path){
+            return "https://image.tmdb.org/t/p/original"+ path;
+        }
+    },
     
 }
 </script>
 <style scoped>
 .poster{
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-    font-family: arial;
     background: #041224;
     text-align: left;
     color: white;

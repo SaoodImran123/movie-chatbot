@@ -1,8 +1,8 @@
 <template>
     <div class="poster">
-        <img :src=imgsrc>
-        <h1 class="title">{{title}}</h1>
-        <p class="runtime">{{runTime}}</p>
+        <img :src=getImageSrc(data.poster_path)>
+        <h1 class="title">{{data.title}}</h1>
+        <p class="runtime">{{getRuntime(data.runtime)}}</p>
         <button  v-if="purchasable==true">Purchase Tickets</button>
     </div>
 </template>
@@ -10,21 +10,32 @@
 export default {
     name: 'poster',
     props: {
-        title: {
-            type: String,
-        },
-        imgsrc: {
-            type: String,
-            required: true
-        },
-        runTime: {
-            type: String,
+        data: {
+            type: Object,
         },
         purchasable: {
             type: Boolean,
         },
+    },
+    methods: {
+        getRuntime(runtime){
+            if(runtime && runtime > 0){
+                var hr = Math.floor(runtime/60);
+                if (hr == 0){
+                     runtime = runtime%60+ "m";
+                }else if (hr > 1){
+                    runtime = hr +"hrs "+ runtime%60+ "m";
+                }else{
+                    runtime = hr +"hr "+ runtime%60+ "m";
+                }
+            }
+
+            return runtime;
+        },
+        getImageSrc(path){
+            return "https://image.tmdb.org/t/p/original"+ path;
+        }
     }
-    
 }
 </script>
 <style scoped>

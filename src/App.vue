@@ -3,10 +3,10 @@
     <div class="con">
       <div class="row">
         <div class="column1">
-          <Catalog :posterDataOne=posterD :posterDataTwo=posterDtwo :posterDataThree=posterDthree />
+          <Catalog :data=data />
         </div>
         <div class="column2">
-          <Chat />
+          <Chat v-on:send-recommendations="generateCatalog" />
         </div>
       </div>
     </div>
@@ -26,20 +26,22 @@ export default {
     return{
       posterD: "",
       posterDtwo: "",
-      posterDthree: ""
+      posterDthree: "",
+      data: ""
     }
   },
 
   methods: {
-    generateCatalog: function(){
-      let Posterdata = {image:"https://image.tmdb.org/t/p/original/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg", title:"Venom", runTime:"2hr 30m", purchasable:true};
-      this.posterD = JSON.parse(JSON.stringify(Posterdata));
-      this.posterDtwo = JSON.parse(JSON.stringify(Posterdata));
-      this.posterDthree = JSON.parse(JSON.stringify(Posterdata));
-      this.posterD.image = "https://image.tmdb.org/t/p/original/eENEf62tMXbhyVvdcXlnQz2wcuT.jpg";
-      console.log(this.posterDtwo)
-
-
+    generateCatalog(data){
+      console.log(data);
+      if(data == null){
+        // Default posters to display
+        data = {0:{_source: ""}, 1:{_source: ""},2:{_source: ""}};
+        data[0]._source = {backdrop_path:"/eENEf62tMXbhyVvdcXlnQz2wcuT.jpg", title:"Venom", runtime:"150", purchasable:true};
+        data[1]._source = {poster_path:"/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg", title:"Venom", runtime:"150", purchasable:true};
+        data[2]._source = {poster_path:"/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg", title:"Venom", runtime:"150", purchasable:true};
+      }
+      this.data = data;
    }
   },
   created: function(){
@@ -56,7 +58,7 @@ export default {
 
 @tailwind utilities;
 html{
-  font-family: Segoe UI;
+  font-family: Roboto, sans-serif;
   font-size: 14px;
   background: #061E3E;
 }

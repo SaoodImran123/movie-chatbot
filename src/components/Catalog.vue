@@ -5,23 +5,14 @@
     </div>
 
     <div class="mainposter">
-        <PosterMain :synopsis='"This is a movie about random dogs with costumes and superpowers. This is a movie about random dogs with costumes and superpowers. This is a movie about random dogs with costumes and superpowers. This is a movie about random dogs with costumes and superpowers. This is a movie about random dogs with costumes and superpowers. "' :imgsrc=posterDataOne.image :title=posterDataOne.title :runTime=posterDataOne.runTime :purchasable=posterDataOne.purchasable />
+        <PosterMain :data=data[0]._source :purchasable=true />
     </div>
     <div class="row">
         <h1 class="showing-in">Showing in Theaters</h1>
     </div>
     <div class="row">
-        <div class="column">
-                <Poster :imgsrc=posterDataTwo.image :title=posterDataTwo.title :runTime=posterDataTwo.runTime :purchasable=posterDataTwo.purchasable />
-        </div>
-        <div class="column">
-                <Poster :imgsrc=posterDataTwo.image :title=posterDataTwo.title :runTime=posterDataTwo.runTime :purchasable=posterDataTwo.purchasable />
-        </div>
-        <div class="column"> 
-                <Poster :imgsrc=posterDataThree.image :title=posterDataThree.title :runTime=posterDataThree.runTime :purchasable=posterDataThree.purchasable />
-        </div>
-        <div class="column"> 
-                <Poster :imgsrc=posterDataThree.image :title=posterDataThree.title :runTime=posterDataThree.runTime :purchasable=posterDataThree.purchasable />
+        <div class="column" v-for="(item, index) in Object.values(data).slice(1)" :key="index">
+            <Poster :data=item._source :purchasable=true />
         </div>
     </div>
 </div>
@@ -35,16 +26,14 @@ export default {
     components: {Poster, PosterMain},
     name: 'poster',
     props: {
-        posterDataOne: {
-            type: Object,
-        },
-        posterDataTwo: {
-            type: Object,
-        },
-        posterDataThree: {
-            type: Object,
+        data: {
+            type: Array,
         }
-
+    },
+    methods: {
+        getPosters(data) {
+            return data.shift();
+        }
     }
     
 }
