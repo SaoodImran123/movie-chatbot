@@ -17,13 +17,14 @@
                         </div>
                     </div>
                     <div v-for="(msg, index) in messages" :key="index">
-                        <div class="media media-chat media-chat-reverse">
+                        <div class="media media-chat media-chat-reverse" v-if='msg.message'>
                             <div class="media-body">
                                 <p>{{ msg.message }}</p>
                                 <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
                             </div>
                         </div>
-                        <div class="media media-chat"> <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                        <div class="media media-chat" v-if='msg.bot_message'> 
+                            <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
                             <div class="media-body">
                                 <p>{{ msg.bot_message }}</p>
                                 <div class="guided"  v-for="(question, i) in msg.guided_ans" :key="i">
@@ -87,6 +88,10 @@ export default {
                 message: msg || this.message,
                 time: this.time
             });
+            var data ={message: this.message, time: this.time};
+            this.messages.push(data);
+            console.log(this.messages);
+            // Clears input box
             this.message = ''
         }
     },
@@ -98,6 +103,8 @@ export default {
         this.socket.on('MESSAGE', (data) => {
             console.log(data);
             this.messages = [...this.messages, data];
+
+            // Send data to Home Page
             this.$emit('send-recommendations', data.response)
         });
     },

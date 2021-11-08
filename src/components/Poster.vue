@@ -2,7 +2,7 @@
     <div class="poster">
         <img :src=getImageSrc(data.poster_path)>
         <h1 class="title">{{data.title}}</h1>
-        <p class="runtime">{{getRuntime(data.runtime)}}</p>
+        <p class="runtime" :class="[{hide: data.runtime > 0}]">{{getRuntime(data.runtime)}}</p>
         <button  v-if="purchasable==true">Purchase Tickets</button>
     </div>
 </template>
@@ -41,7 +41,7 @@ export default {
 <style scoped>
 .poster{
     width: 100%;
-    font-family: arial;
+    font-family: Roboto, sans-serif;
     background: transparent;
 
 }
@@ -53,7 +53,7 @@ export default {
 }
 .title{
     color:#F6CD61;
-    font-size:22px;
+    font-size:18px;
     text-align: left;
 }
 .poster button{

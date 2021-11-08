@@ -183,6 +183,7 @@ io.on('connection', function(socket) {
       var tokens;
       return new Promise(async function(resolve, reject){
         let tokens = await runPy(data.message);
+        data.message = null;
         // Check tokens if fullfil a condition
         console.log(tokens);
         requirements = checkRequirements(tokens, requirements);
@@ -223,7 +224,7 @@ io.on('connection', function(socket) {
 });
 
 function showESResult(result){
-  result.bot_message =  "I recommend " + result.response[0]._source.title + ", " + result.response[1]._source.title + ", and " + result.response[2]._source.title;
+  result.bot_message =  "I recommend " + result.response[0]._source.title + ", " + result.response[1]._source.title + ", " + result.response[2]._source.title + ", " + result.response[3]._source.title + ", and " + result.response[4]._source.title;
   console.log(result);
   io.emit('MESSAGE', result);
 }

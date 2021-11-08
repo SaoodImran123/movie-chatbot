@@ -1,18 +1,18 @@
 <template>
 <div class="catalog">
     <div class="title">
-        <h1>Recommendations</h1>
+        <h1> Main Recommendation</h1>
     </div>
 
     <div class="mainposter">
-        <PosterMain :data=data[0]._source :purchasable=true />
+        <PosterMain :data=data[0]._source :purchasable=false />
     </div>
     <div class="row">
-        <h1 class="showing-in">Showing in Theaters</h1>
+        <h1 class="showing-in">More Recommendations</h1>
     </div>
     <div class="row">
         <div class="column" v-for="(item, index) in Object.values(data).slice(1)" :key="index">
-            <Poster :data=item._source :purchasable=true />
+            <Poster :data=item._source :purchasable=false />
         </div>
     </div>
 </div>
@@ -49,6 +49,7 @@ export default {
 .mainposter{
     margin: 30px;
     height: 100%;
+    margin-top: 10px;
 }
 .row{
     display: flex;
@@ -61,9 +62,9 @@ export default {
 }
 .title{
     text-align: center;
-    margin-bottom: 10px;
     font-size: 40px;
     color: #F6CD61;
+    margin-top: 15px;
 }
 .showing-in{
     color: #F6CD61;
