@@ -2,7 +2,7 @@
     <div class="poster">
         <img :src=getImageSrc(data.poster_path)>
         <h1 class="title">{{data.title}}</h1>
-        <p class="runtime">{{getRuntime(data.runtime)}}</p>
+        <p class="runtime" :class="[{hide: data.runtime > 0}]">{{getRuntime(data.runtime)}}</p>
         <button  v-if="purchasable==true">Purchase Tickets</button>
     </div>
 </template>

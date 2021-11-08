@@ -7,10 +7,10 @@
         </div>
         <div class="poster-info">
                 <h1 class="title">{{data.title}}</h1>
-                <p class="runtime">{{getRuntime(data.runtime)}}</p>
-                <p class="synopsis-title">Synopsis</p>
+                <p class="runtime" :class="[{hide: data.runtime > 0}]">{{getRuntime(data.runtime)}}</p>
+                <p class="synopsis-title" v-if='data.overview'>Synopsis</p>
                 <p class="synopsis">{{data.overview}}</p>
-                <p class="directors">Director: {{getDirector(data.crew)}} </p>
+                <p class="directors" v-if='getDirector(data.crew)'>Director: {{getDirector(data.crew)}} </p>
                 <div class="btn-container">
                 <button  v-if="purchasable==true">Purchase Tickets</button>
                 </div>
@@ -34,7 +34,7 @@ export default {
     methods: {
         getDirector(crew){
             if(crew){
-                for(var i = 0; i < crew; i++){
+                for(var i = 0; i < crew.length; i++){
                     if(crew[i].job == "Director"){
                         return crew[i].name;
                     }

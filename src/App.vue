@@ -33,7 +33,6 @@ export default {
 
   methods: {
     generateCatalog(data){
-      console.log(data);
       if(data == null){
         // Default posters to display
         data = {0:{_source: ""}, 1:{_source: ""},2:{_source: ""}};
@@ -81,5 +80,8 @@ html{
 }
 .column2{
     flex: 30%;
+}
+.hide{
+    display: none;
 }
 </style>
