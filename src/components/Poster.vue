@@ -41,7 +41,7 @@ export default {
 <style scoped>
 .poster{
     width: 100%;
-    font-family: arial;
+    font-family: Roboto, sans-serif;
     background: transparent;
 
 }
@@ -53,7 +53,7 @@ export default {
 }
 .title{
     color:#F6CD61;
-    font-size:22px;
+    font-size:18px;
     text-align: left;
 }
 .poster button{
