@@ -72,7 +72,6 @@ function getCurrentDate(){
 export default {
     data() {
         return {
-            user: '',
             message: '',
             messages: [],
             time: '',
@@ -99,10 +98,10 @@ export default {
         this.socket.on('MESSAGE', (data) => {
             console.log(data);
             this.messages = [...this.messages, data];
+            this.$emit('send-recommendations', data.response)
         });
     },
     updated(){
-        // TODO: Fix auto scroll
         var textboxes = document.getElementsByClassName("media-chat");
         var obj = textboxes[textboxes.length - 1];
         obj.scrollIntoView({behavior: "smooth", block: "nearest"});
