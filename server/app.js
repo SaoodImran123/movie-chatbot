@@ -43,16 +43,22 @@ client.ping({
 
 var elasticSearchPopular = function (genre, data){
   return new Promise(function(resolve, reject){
+    var date = new Date().toISOString().split("T")[0];
     client.search({
       index: 'tmdb_movies',
       size: '5',
       body:{
         sort: [
-          {"vote_count": {"order" : "desc"}},
-          {"vote_average": {"order" : "desc"}}
+          {"popularity": {"order" : "desc"}},
+          {"release_date": {"order" : "desc", "format": "yyyy-MM-dd"}}
         ],
         query: {
-          match_all: {}
+          bool: {
+            filter: [
+                {term: {"original_language": "en"}},
+                {term: {"status": "released"}},
+                {range: {"release_date": {"lte": date}}}
+            ]}
         }
       }
     }).then(function(resp) {
@@ -186,12 +192,13 @@ io.on('connection', function(socket) {
         data.message = null;
         // Check tokens if fullfil a condition
         console.log(tokens);
+        // Find a way to select field based on tokens
         requirements = checkRequirements(tokens, requirements);
         if(requirements.genre.length == 0){
           data.bot_message = "What kind of genre are you feeling right now?";
           data.guided_ans = ["I want action movies", "I want comedy movies", "I want horror movies"];
           io.emit('MESSAGE', data);
-        }
+        } 
         // else if(requirements.release_date.length == 0){
         //   data.bot_message = "Do you have any preference on how old the movie is?";
         //   data.guided_ans = ["I want movies released in the past year", "I want movies released in the last 10 years", "I don't have a preference"];

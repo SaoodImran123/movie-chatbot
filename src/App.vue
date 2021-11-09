@@ -35,20 +35,10 @@ export default {
   methods: {
     generateCatalog(data){
       console.log(data);
-      if(data == null){
-        // Default posters to display
-        data = {0:{_source: ""}, 1:{_source: ""},2:{_source: ""}};
-        data[0]._source = {backdrop_path:"/eENEf62tMXbhyVvdcXlnQz2wcuT.jpg", title:"Venom", runtime:"150", purchasable:true};
-        data[1]._source = {poster_path:"/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg", title:"Venom", runtime:"150", purchasable:true};
-        data[2]._source = {poster_path:"/rjkmN1dniUHVYAtwuV3Tji7FsDO.jpg", title:"Venom", runtime:"150", purchasable:true};
-      }
       this.data = data;
    }
   },
   created: function(){
-    this.generateCatalog()
-  },
-  mounted() {
     console.log(API_URL+'movies-default')
     fetch(API_URL+'movies-default')
       .then(response => {
@@ -56,9 +46,9 @@ export default {
       })
       .then(result => {
         // result holds an array of 5 of the most popular movies
-        console.log(result)
+        this.generateCatalog(result);
       });
-  },
+  }
 }
 
 </script>

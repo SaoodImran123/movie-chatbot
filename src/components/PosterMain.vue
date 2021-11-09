@@ -41,9 +41,16 @@ export default {
                 }
             }
         },
-        getRuntime(runtime){
+         getRuntime(runtime){
             if(runtime && runtime > 0){
-                runtime = Math.floor(runtime/60) +"hr "+ runtime%60+ "m";
+                var hr = Math.floor(runtime/60);
+                if (hr == 0){
+                     runtime = runtime%60+ "m";
+                }else if (hr > 1){
+                    runtime = hr +"hrs "+ runtime%60+ "m";
+                }else{
+                    runtime = hr +"hr "+ runtime%60+ "m";
+                }
             }
 
             return runtime;
@@ -81,6 +88,8 @@ export default {
 .synopsis{
     color: #FB6A69;
     width:100%;
+    max-height: 300px;
+    overflow-y: scroll;
 }
 .directors{
     color: #FB6A69;
