@@ -88,7 +88,7 @@ export default {
                 message: msg || this.message,
                 time: this.time
             });
-            var data ={message: this.message, time: this.time};
+            var data ={message: msg || this.message, time: this.time};
             this.messages.push(data);
             console.log(this.messages);
             // Clears input box
