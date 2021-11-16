@@ -33,7 +33,7 @@ export default {
             return runtime;
         },
         getImageSrc(path){
-            return "https://image.tmdb.org/t/p/original"+ path;
+            return "https://image.tmdb.org/t/p/w300"+ path;
         }
     }
 }

@@ -73,11 +73,73 @@ var elasticSearchPopular = function (genre, data){
 }
 
 // Index: same as mongodb but lower case
-var elasticSearchGenre = function (genre, data){
+var elasticSearchQuery= function (tokens, data){
   return new Promise(function(resolve, reject){
+    var filter, must;
+    console.log("ids: " + [data.ids.toString()]);
+    console.log("tokens: " + data.tokens.toString());
+    if(data.ids.length > 0){
+      filter = [
+        {term: {"original_language": "en"}},
+        {term: {"status": "released"}},
+        {terms: {"_id": data.ids}}];
+    }else{
+      filter = [
+        {term: {"original_language": "en"}},
+        {term: {"status": "released"}}];
+    }
+
+    var must = [
+      {
+        "multi_match": {
+          "query": data.tokens.toString(),
+          "fields": [
+            "cast.character",
+            "cast.name",
+            "title",
+            "overview", 
+            "production_companies.name"
+          ]
+        }
+      },
+      {
+        "exists":{
+            "field": "poster_path"
+        }
+      }        
+  ]
+
+  var not = [
+    {
+      "multi_match": {
+        "query": data.tokens.toString(),
+        "fields": [
+          "cast.character",
+          "cast.name",
+          "title",
+          "overview", 
+          "production_companies.name"
+        ]
+      }
+    },
+    {
+      "exists":{
+          "field": "poster_path"
+      }
+    }        
+  ]
+
+  if(data.requirements.genre.length > 0){
+    var genres = data.requirements.genre;
+    for (var i = 0; i < genres.length; i++){
+      console.log(genres[i]);
+      must.push({"term": {"genres.name": genres[i]}});
+    }
+  }
+
     client.search({
       index: 'tmdb_movies',
-      size: '5',
+      size: '500',
       body:{
         sort: [
           {"vote_count": {"order" : "desc"}},
@@ -85,20 +147,10 @@ var elasticSearchGenre = function (genre, data){
         ],
         query: {
           bool: {
-            must: {
-              multi_match: {
-                query: genre.toString(),
-                fields: [
-                    "genres.name"
-                ]
-              }
-            },
-            filter: {
-              term: {
-                  "original_language": "en"
-              }
+            must: must,
+            filter: 
+              filter
             }
-          }
         }
       }
     }).then(function(resp) {
@@ -113,39 +165,10 @@ var elasticSearchGenre = function (genre, data){
   })
 }
 
-
-
-//elasticSearchGenre("horror");
-
-
-//Define a schema
-// var Schema = mongoose.Schema;
-
-// var MovieModelSchema = new Schema({
-//   genre: String,
-//   popularity_date: Number
-// });
-
-// var MovieModel = mongoose.model('MovieModel', MovieModelSchema );
-
-// MovieModel.find(
-//   {
-//     title: RegExp("shang.*", 'i'),
-//     popularity: {$gt: 5}
-//   },
-//   'title',
-//   function(err, MovieModel){
-//     if(err) {
-//       return console.log(err);
-//     } else{
-//       console.log(MovieModel.toString());
-//     }
-//   }
-// )
-
 // PYTHON SCRIPT
-let {PythonShell} = require('python-shell')
+let {PythonShell} = require('python-shell');
 
+// Convert strings to tokens and get keywords
 function runPy(sentence){
   return new Promise(async function(resolve, reject){
     let options = {
@@ -184,20 +207,49 @@ const io = require('socket.io')(server, {
 
 io.on('connection', function(socket) {
     console.log(socket.id)
-    var requirements = {genre: [], release_date: [], occassion:[], mood: []};
     socket.on('SEND_MESSAGE', function(data) {
-      var tokens;
       return new Promise(async function(resolve, reject){
+
+        // Check if message has the genre
+        data.requirements = checkGenre(data.message, data.requirements);
+
+        // Remove the genre from the message so it doesn't clutter tokens
+        for (var i = 0; i < data.requirements.genre.length; i++){
+          data.message = data.message.replace(data.requirements.genre[i], "");
+        }
+
+        // Run sentence_parse.py to get keywords
         let tokens = await runPy(data.message);
+
+        // Loop through tokens and append to previous tokens
+        for (var item of tokens){
+          // Remove want/wants from token
+          if(item.includes("want") || item.includes("wants")){
+            item.replace("want", "");
+            item.replace("wants", "");
+            data.positive = true;
+          }else if(item.includes("don't") || item.includes("don") || item.includes("do not")){
+            item.replace("don't", "");
+            item.replace("don", "");
+            item.replace("do not", "");
+            data.positive = false;
+          }
+          // Remove the genre from the message so it doesn't clutter tokens
+          for (var i = 0; i < data.requirements.genre.length; i++){
+            item = item.replace(data.requirements.genre[i], "");
+          }
+
+          if(!data.tokens.includes(item)){
+            data.tokens = data.tokens + " " + item;
+          }
+        }
         data.message = null;
         // Check tokens if fullfil a condition
         console.log(tokens);
-        // Find a way to select field based on tokens
-        requirements = checkRequirements(tokens, requirements);
-        if(requirements.genre.length == 0){
+
+        if(data.requirements.genre.length == 0){
           data.bot_message = "What kind of genre are you feeling right now?";
           data.guided_ans = ["I want action movies", "I want comedy movies", "I want horror movies"];
-          io.emit('MESSAGE', data);
         } 
         // else if(requirements.release_date.length == 0){
         //   data.bot_message = "Do you have any preference on how old the movie is?";
@@ -215,13 +267,12 @@ io.on('connection', function(socket) {
         //   data.bot_message = "Are you content with your recommendation?";
         //   data.guided_ans = ["Yes", "No"];
         // }
-        else{
-          // TODO: check for what type of input and search by that type
-          elasticSearchGenre(tokens, data).then(
-            result=>showESResult(result),
-            error=>console.log(error)
-          )
-        }
+        elasticSearchQuery(tokens, data).then(
+          result => {
+            showESResult(result);
+          },
+          error=>console.log(error)
+        )
 
 
       })
@@ -231,14 +282,54 @@ io.on('connection', function(socket) {
 });
 
 function showESResult(result){
-  result.bot_message =  "I recommend " + result.response[0]._source.title + ", " + result.response[1]._source.title + ", " + result.response[2]._source.title + ", " + result.response[3]._source.title + ", and " + result.response[4]._source.title;
-  console.log(result);
-  io.emit('MESSAGE', result);
+  try {
+    result.ids = [];
+    for (var item of result.response){
+      if(!result.ids.includes(item._id)){
+        result.ids.push(item._id);
+      }
+    }
+    
+    // Only display top 5 recommendation
+    result.response = result.response.slice(0, 5);
+
+    // Create final string when all requirements are fulfilled
+    if(result.requirements.genre.length > 0){
+      result.bot_message =  "I recommend "; 
+      console.log(result.response.length);
+      for(var i =0; i < result.response.length; i++){
+        if(i < result.response.length -1){
+          result.bot_message += result.response[i]._source.title + ", ";
+        }else{
+          result.bot_message += "and " + result.response[i]._source.title;
+        }
+      }
+    }
+
+    console.log(result);
+
+    // Send back to frontend
+    io.emit('MESSAGE', result);
+  } catch (error) {
+    console.log(error);
+  }
 }
 
 
 // Placeholder to test guided answers
-// TODO: get requirements from tokens
+function checkGenre(sentence, req){
+  var genres = [ "action", "adventure","animation","comedy","crime","documentary","drama","family","fantasy","history","horror","music","mystery","romance","science fiction","sci-fi","thriller","war","western"];
+  for(var j = 0; j < genres.length; j++){
+    // Check if sentence has the genre
+    if(sentence.includes(genres[j])){
+      req.genre.push(genres[j]);
+    }  
+  }
+
+  console.log(req);
+  return req;
+}
+
 function checkRequirements(tokens, req){
   var genres = [ "action", "adventure","animation","comedy","crime","documentary","drama","family","fantasy","history","horror","music","mystery","romance","science fiction","sci-fi","thriller","war","western"];
   for(var i = 0; i < tokens.length; i++){
@@ -250,32 +341,6 @@ function checkRequirements(tokens, req){
       }  
     }
   }
-  // for(var j = 0; j < genres.length; j++){
-  //   // Check if token has the genre
-  //   tokens.find(v => function(){
-  //     if(v.includes(genres[j])){
-  //       req.genre.push(genres[j]);
-  //     }
-  //   });
-  // }
-
-  // for(var i = 0; i < tokens.length; i++){
-
-  //   // Check if tokens have release date
-  //   if(tokens[i].includes("released")){
-  //     req.release_date.push(tokens[i]);
-  //   }
-
-  //   // Check if tokens have occassion
-  //   if(tokens[i].includes("date night")){
-  //     req.occassion.push(tokens[i]);
-  //   }
-
-  //   // Check if tokens have mood
-  //   if(tokens[i].includes("happy")){
-  //     req.mood.push(tokens[i]);
-  //   }
-  // }
 
   console.log(req);
   return req;

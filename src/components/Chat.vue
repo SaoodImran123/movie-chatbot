@@ -77,7 +77,10 @@ export default {
             messages: [],
             time: '',
             createdTime: '',
-            socket : io('ws://localhost:3050')
+            socket : io('ws://localhost:3050'),
+            ids: [],
+            tokens: '',
+            requirements: {genre: [], release_date: [], occassion:[], mood: []}
         }
     },
     methods: {
@@ -86,7 +89,10 @@ export default {
             e.preventDefault();
             this.socket.emit('SEND_MESSAGE', {
                 message: msg || this.message,
-                time: this.time
+                time: this.time,
+                ids: this.ids,
+                tokens: this.tokens,
+                requirements: this.requirements
             });
             var data ={message: msg || this.message, time: this.time};
             this.messages.push(data);
@@ -103,9 +109,13 @@ export default {
         this.socket.on('MESSAGE', (data) => {
             console.log(data);
             this.messages = [...this.messages, data];
+            this.ids = data.ids;
+            this.tokens = data.tokens;
+            this.requirements = data.requirements;
+            this.message = "";
 
             // Send data to Home Page
-            this.$emit('send-recommendations', data.response)
+            this.$emit('send-recommendations', data.response);
         });
     },
     updated(){

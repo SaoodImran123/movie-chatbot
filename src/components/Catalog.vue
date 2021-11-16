@@ -8,7 +8,7 @@
         <PosterMain :data=data[0]._source :purchasable=false />
     </div>
     <div class="row">
-        <h1 class="showing-in">More Recommendations</h1>
+        <h1 class="showing-in" v-if='data.length > 1'>More Recommendations</h1>
     </div>
     <div class="row">
         <div class="column" v-for="(item, index) in Object.values(data).slice(1)" :key="index">
