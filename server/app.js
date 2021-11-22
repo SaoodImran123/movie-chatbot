@@ -148,7 +148,7 @@ var elasticSearchQuery= function (tokens, data){
 
     client.search({
       index: 'tmdb_movies',
-      size: '500',
+      size: '5',
       body:{
         query: {
           bool: {
