@@ -83,12 +83,14 @@ var elasticSearchQuery= function (tokens, data){
         {term: {"original_language": "en"}},
         {range: {"release_date": {"gte": "1990-01-01"}}},
         {range: {"runtime": {"gte": "60"}}},
+        {term: {"adult": "false"}},
         {term: {"status": "released"}}];
     }else{
       filter = [
         {term: {"original_language": "en"}},
         {range: {"release_date": {"gte": "1994-01-01"}}},
         {range: {"runtime": {"gte": "60"}}},
+        {term: {"adult": "false"}},
         {term: {"status": "released"}}];
     }
 
