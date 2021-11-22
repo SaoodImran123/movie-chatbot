@@ -81,36 +81,47 @@ var elasticSearchQuery= function (tokens, data){
     if(data.ids.length > 0){
       filter = [
         {term: {"original_language": "en"}},
-        {term: {"status": "released"}},
-        {terms: {"_id": data.ids}}];
+        {range: {"release_date": {"gte": "1990-01-01"}}},
+        {range: {"runtime": {"gte": "60"}}},
+        {term: {"status": "released"}}];
     }else{
       filter = [
         {term: {"original_language": "en"}},
+        {range: {"release_date": {"gte": "1994-01-01"}}},
+        {range: {"runtime": {"gte": "60"}}},
         {term: {"status": "released"}}];
     }
 
+    var should = []
+
     var must = [
-      {
-        "multi_match": {
-          "query": data.tokens.toString(),
-          "fields": [
-            "cast.character",
-            "cast.name",
-            "title",
-            "overview", 
-            "production_companies.name"
-          ]
-        }
-      },
       {
         "exists":{
             "field": "poster_path"
         }
-      }        
+      },
+      {
+          "exists":{
+              "field": "backdrop_path"
+          }
+      }           
   ]
 
   var not = [
     {
+      "exists":{
+          "field": "poster_path"
+      }
+    },
+    {
+        "exists":{
+            "field": "backdrop_path"
+        }
+    }        
+  ]
+
+  if(data.tokens.length > 0){
+    must.push( {
       "multi_match": {
         "query": data.tokens.toString(),
         "fields": [
@@ -121,19 +132,17 @@ var elasticSearchQuery= function (tokens, data){
           "production_companies.name"
         ]
       }
-    },
-    {
-      "exists":{
-          "field": "poster_path"
-      }
-    }        
-  ]
+    });
+  }
 
   if(data.requirements.genre.length > 0){
     var genres = data.requirements.genre;
     for (var i = 0; i < genres.length; i++){
-      console.log(genres[i]);
-      must.push({"term": {"genres.name": genres[i]}});
+      if (i > 0){
+        should.push({"term": {"genres.name": genres[i]}});
+      }else{
+        must.push({"term": {"genres.name": genres[i]}});
+      }
     }
   }
 
@@ -141,15 +150,11 @@ var elasticSearchQuery= function (tokens, data){
       index: 'tmdb_movies',
       size: '500',
       body:{
-        sort: [
-          {"vote_count": {"order" : "desc"}},
-          {"vote_average": {"order" : "desc"}}
-        ],
         query: {
           bool: {
             must: must,
-            filter: 
-              filter
+            should: should,
+            filter: filter
             }
         }
       }
@@ -294,7 +299,7 @@ function showESResult(result){
     result.response = result.response.slice(0, 5);
 
     // Create final string when all requirements are fulfilled
-    if(result.requirements.genre.length > 0){
+    if(result.requirements.genre.length > 0 && result.response.length > 0){
       result.bot_message =  "I recommend "; 
       console.log(result.response.length);
       for(var i =0; i < result.response.length; i++){
