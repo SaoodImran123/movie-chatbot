@@ -28,7 +28,7 @@ var port = 3050;
 // Elastic Search
 var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
-   hosts: [ 'http://elastic:tSsrpzP3nj3yFS3OgD9s@[2a01:4ff:f0:bdb::1]:9200']
+   hosts: [ 'http://moviezen:OdIO8m8bnKknUUDu1kMT@[2a01:4ff:f0:bdb::1]:9200']
 });
 
 client.ping({
