@@ -14,7 +14,7 @@
 </template>
 
 <script>
-const API_URL = "http://localhost:3050/";
+const API_URL = "http://"+window.location.hostname+":3050/";
 import Chat from './components/Chat.vue'
 import Catalog from './components/Catalog.vue'
 
