@@ -4,7 +4,7 @@ var cors = require('cors')
 // const path = require('path');
 const app = express();
 app.use(cors({
-  origin: 'http://localhost:8080'
+  origin: '*'
 }))
 // app.use((req, res, next)=>{
 //   res.header("Access-Control-Allow-Origin", "*");
