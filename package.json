@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "sc-serve": "concurrently --kill-others \"node server/app.js\" \"npm run serve\""
+    "sc-serve": "concurrently --kill-others \"node server/app.js\" \"npm run serve\"",
+    "prod-serve": "concurrently --kill-others \"node server/app.js\" \"vue-cli-service serve --mode production\""
   },
   "dependencies": {
     "@elastic/elasticsearch": "^7.15.0",
