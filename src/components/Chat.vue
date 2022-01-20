@@ -77,7 +77,7 @@ export default {
             messages: [],
             time: '',
             createdTime: '',
-            socket : io('ws://localhost:3050'),
+            socket : io('ws://'+window.location.hostname+':3050'),
             ids: [],
             tokens: '',
             requirements: {genre: [], release_date: [], occassion:[], mood: []}
