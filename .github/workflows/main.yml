@@ -37,8 +37,8 @@ jobs:
             StrictHostKeyChecking no
           END
         env:
-          SSH_USER: ${{ secrets.GITHUB_ACTIONS_SSH_USER }}
-          SSH_KEY: ${{ secrets.GITHUB_ACTIONS_SSH_KEY }}
+          SSH_USER: ${{ secrets.ACTIONS_SSH_USER }}
+          SSH_KEY: ${{ secrets.ACTIONS_SSH_KEY }}
           SSH_HOST: ${{ secrets.MOVIEZEN_SSH_HOST }}
 
       - name: Rebuild Docker Container
