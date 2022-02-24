@@ -1,20 +1,16 @@
 const express = require('express');
 var cors = require('cors')
-// const {spawn} = require('child_process');
-// const path = require('path');
+const msgProcessor = require("./msg_processor")
+const elastic = require("./elastic")
+const routes = require("./api/routes")
+var port = 3050;
+
 const app = express();
 app.use(cors({
   origin: '*'
 }))
-// app.use((req, res, next)=>{
-//   res.header("Access-Control-Allow-Origin", "*");
-//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//   next();
-// });
 
 
-const routes = require("./api/routes")
-var port = 3050;
 
 
 // DATABASE
@@ -30,147 +26,9 @@ var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
    hosts: [ 'http://moviezen:OdIO8m8bnKknUUDu1kMT@[2a01:4ff:f0:bdb::1]:9200']
 });
+elastic.pingElastic(client)
 
-client.ping({
-  requestTimeout: 30000,
-}, function(error) {
-  if (error) {
-      console.error('elasticsearch cluster is down!');
-  } else {
-      console.log('Elastic search returned ping. Everything is ok');
-  }
-});
 
-var elasticSearchPopular = function (genre, data){
-  return new Promise(function(resolve, reject){
-    var date = new Date().toISOString().split("T")[0];
-    client.search({
-      index: 'tmdb_movies',
-      size: '5',
-      body:{
-        sort: [
-          {"popularity": {"order" : "desc"}},
-          {"release_date": {"order" : "desc", "format": "yyyy-MM-dd"}}
-        ],
-        query: {
-          bool: {
-            filter: [
-                {term: {"original_language": "en"}},
-                {term: {"status": "released"}},
-                {range: {"release_date": {"lte": date}}}
-            ]}
-        }
-      }
-    }).then(function(resp) {
-      //resturns an array of movie hits
-      data = resp.hits.hits;
-      resolve(data);
-    }, function(err) {
-      reject(err.message);
-      console.trace(err.message);
-    });
-  })
-}
-
-// Index: same as mongodb but lower case
-var elasticSearchQuery= function (tokens, data){
-  return new Promise(function(resolve, reject){
-    var filter, must;
-    console.log("ids: " + [data.ids.toString()]);
-    console.log("tokens: " + data.tokens.toString());
-    if(data.ids.length > 0){
-      filter = [
-        {term: {"original_language": "en"}},
-        {range: {"release_date": {"gte": "1990-01-01"}}},
-        {range: {"runtime": {"gte": "60"}}},
-        {term: {"adult": "false"}},
-        {term: {"status": "released"}}];
-    }else{
-      filter = [
-        {term: {"original_language": "en"}},
-        {range: {"release_date": {"gte": "1994-01-01"}}},
-        {range: {"runtime": {"gte": "60"}}},
-        {term: {"adult": "false"}},
-        {term: {"status": "released"}}];
-    }
-
-    var should = []
-
-    var must = [
-      {
-        "exists":{
-            "field": "poster_path"
-        }
-      },
-      {
-          "exists":{
-              "field": "backdrop_path"
-          }
-      }           
-  ]
-
-  var not = [
-    {
-      "exists":{
-          "field": "poster_path"
-      }
-    },
-    {
-        "exists":{
-            "field": "backdrop_path"
-        }
-    }        
-  ]
-
-  if(data.tokens.length > 0){
-    must.push( {
-      "multi_match": {
-        "query": data.tokens.toString(),
-        "fields": [
-          "cast.character",
-          "cast.name",
-          "title",
-          "overview", 
-          "production_companies.name"
-        ]
-      }
-    });
-  }
-
-  if(data.requirements.genre.length > 0){
-    var genres = data.requirements.genre;
-    for (var i = 0; i < genres.length; i++){
-      if (i > 0){
-        should.push({"term": {"genres.name": genres[i]}});
-      }else{
-        must.push({"term": {"genres.name": genres[i]}});
-      }
-    }
-  }
-
-    client.search({
-      index: 'tmdb_movies',
-      size: '5',
-      body:{
-        query: {
-          bool: {
-            must: must,
-            should: should,
-            filter: filter
-            }
-        }
-      }
-    }).then(function(resp) {
-      console.log(resp);
-      //resturns an array of movie hits
-      data.response = resp.hits.hits;
-      resolve(data);
-    }, function(err) {
-      reject(err.message);
-      console.trace(err.message);
-    });
-  })
-}
 
 // PYTHON SCRIPT
 let {PythonShell} = require('python-shell');
@@ -225,34 +83,19 @@ io.on('connection', function(socket) {
           data.message = data.message.replace(data.requirements.genre[i], "");
         }
 
-        // Run sentence_parse.py to get keywords
-        let tokens = await runPy(data.message);
+        //searchTokens is a json string e.g. {"genre":["action","comedy"]} //searchTokens.genre[0]
+        let searchTokensStr = msgProcessor.sentenceClassify(data.message);
+        let searchTokens = JSON.parse(searchTokensStr);
 
-        // Loop through tokens and append to previous tokens
-        for (var item of tokens){
-          // Remove want/wants from token
-          if(item.includes("want") || item.includes("wants")){
-            item.replace("want", "");
-            item.replace("wants", "");
-            data.positive = true;
-          }else if(item.includes("don't") || item.includes("don") || item.includes("do not")){
-            item.replace("don't", "");
-            item.replace("don", "");
-            item.replace("do not", "");
-            data.positive = false;
-          }
-          // Remove the genre from the message so it doesn't clutter tokens
-          for (var i = 0; i < data.requirements.genre.length; i++){
-            item = item.replace(data.requirements.genre[i], "");
-          }
+        //Perform search on given user sentence
+        elastic.elasticSearchQuery(searchTokens, client).then(
+            result => {
+              showESResult(result);
+            },
+            error=>console.log(error)
+        )
 
-          if(!data.tokens.includes(item)){
-            data.tokens = data.tokens + " " + item;
-          }
-        }
-        data.message = null;
-        // Check tokens if fullfil a condition
-        console.log(tokens);
+
 
         if(data.requirements.genre.length == 0){
           data.bot_message = "What kind of genre are you feeling right now?";
@@ -274,12 +117,7 @@ io.on('connection', function(socket) {
         //   data.bot_message = "Are you content with your recommendation?";
         //   data.guided_ans = ["Yes", "No"];
         // }
-        elasticSearchQuery(tokens, data).then(
-          result => {
-            showESResult(result);
-          },
-          error=>console.log(error)
-        )
+
 
 
       })
@@ -366,7 +204,7 @@ app.get('/nlp', (req, res)=>{
 app.get('/movies-default', (req, res)=>{
 
   console.log("api received")
-  elasticSearchPopular().then(
+  elastic.elasticSearchPopular(client).then(
     result=>{
       //console.log(result)
       res.json(result)
