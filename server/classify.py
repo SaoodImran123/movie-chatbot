@@ -30,12 +30,12 @@ def categoryClassifier():
         for i in range(0, len(raw_outputs[0])):
             returnData[categories[i]] = raw_outputs[0][i]
 
-        # TODO return a list of keywords per category
-        print(returnData)
-        print(categories[predictions[0]])
+        #print(returnData)
+        #print(categories[predictions[0]])
         return returnData, predictions[0]
 
 
+# TODO add support for negatives
 def keywordExtraction(categoryNumber):
     doc = nlp(sentence)
 
@@ -103,13 +103,79 @@ def keywordExtraction(categoryNumber):
                     releaseDate = ["gte", "2015-01-01"]
         return releaseDate
 
-    # For Age restriction
+    # TODO For Age restriction
 
 
     # For runtime
+    if categoryNumber == categories.index("runtime"):
+        runtime = ""
+        for token in doc:
+            if token.lemma_ == "short":
+                runtime = ["lte", "90"]
+            elif token.lemma_ == "long":
+                runtime = ["gte", "90"]
+        return runtime
 
 
-classificationProbabilities, mainPredictionCategory = categoryClassifier()
-print(keywordExtraction(mainPredictionCategory))
+def createResponseJson(categoryNumber, keywords):
+    jsonData = {}
+
+    if categoryNumber == categories.index("genre"):
+        genres = []
+        genres.append(keywords)
+        jsonData['genres'] = genres
+    else:
+        jsonData['genres'] = []
+
+    if categoryNumber == categories.index("production_company"):
+        production_companys = []
+        production_companys.append(keywords)
+        jsonData['production_company'] = production_companys
+    else:
+        jsonData['production_company'] = []
+
+    if categoryNumber == categories.index("cast"):
+        cast = []
+        cast.append(keywords)
+        jsonData['cast'] = cast
+    else:
+        jsonData['cast'] = []
+
+    if categoryNumber == categories.index("release_date"):
+        release_date = []
+        release_date.append(keywords)
+        jsonData['release_date'] = release_date
+    else:
+        jsonData['release_date'] = []
+
+    if categoryNumber == categories.index("language"):
+        language = []
+        language.append(keywords)
+        jsonData['original_language'] = language
+    else:
+        jsonData['original_language'] = []
+
+    if categoryNumber == categories.index("age_restriction"):
+        age_restriction = []
+        age_restriction.append(keywords)
+        jsonData['adult'] = age_restriction
+    else:
+        jsonData['adult'] = []
+
+    if categoryNumber == categories.index("runtime"):
+        runtime = []
+        runtime.append(keywords)
+        jsonData['runtime'] = runtime
+    else:
+        jsonData['runtime'] = []
+
+
+    return jsonData
+
+
+
+classificationProbabilities, mainPredictionCategoryNumber = categoryClassifier()
+keywords = keywordExtraction(mainPredictionCategoryNumber)
+print(createResponseJson(mainPredictionCategoryNumber, keywords))
 
 
