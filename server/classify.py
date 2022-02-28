@@ -62,13 +62,12 @@ def keywordExtraction(categoryNumber):
         print(ppn)
         if len(ppn) > 0:
             #print("Proper noun: " + str(ppn[0]))
-            return str(ppn[0])
+            return str(ppn)
 
 
     # For language detection
     if categoryNumber == categories.index("language"):
         languages = {"af": "afrikaans", "sq": "albanian", "am": "amharic", "ar": "arabic", "hy": "armenian", "az": "azerbaijani", "eu": "basque", "be": "belarusian", "bn": "bengali", "bs": "bosnian", "bg": "bulgarian", "ca": "catalan", "ceb": "cebuano", "ny": "chichewa", "zh-cn": "chinese (simplified)", "zh-tw": "chinese (traditional)", "co": "corsican", "hr": "croatian", "cs": "czech", "da": "danish", "nl": "dutch", "en": "english", "eo": "esperanto", "et": "estonian", "tl": "filipino", "fi": "finnish", "fr": "french", "fy": "frisian", "gl": "galician", "ka": "georgian", "de": "german", "el": "greek", "gu": "gujarati", "ht": "haitian creole", "ha": "hausa", "haw": "hawaiian", "iw": "hebrew", "hi": "hindi", "hmn": "hmong", "hu": "hungarian", "is": "icelandic", "ig": "igbo", "id": "indonesian", "ga": "irish", "it": "italian", "ja": "japanese", "jw": "javanese", "kn": "kannada", "kk": "kazakh", "km": "khmer", "ko": "korean", "ku": "kurdish (kurmanji)", "ky": "kyrgyz", "lo": "lao", "la": "latin", "lv": "latvian", "lt": "lithuanian", "lb": "luxembourgish", "mk": "macedonian", "mg": "malagasy", "ms": "malay", "ml": "malayalam", "mt": "maltese", "mi": "maori", "mr": "marathi", "mn": "mongolian", "my": "myanmar (burmese)", "ne": "nepali", "no": "norwegian", "ps": "pashto", "fa": "persian", "pl": "polish", "pt": "portuguese", "pa": "punjabi", "ro": "romanian", "ru": "russian", "sm": "samoan", "gd": "scots gaelic", "sr": "serbian", "st": "sesotho", "sn": "shona", "sd": "sindhi", "si": "sinhala", "sk": "slovak", "sl": "slovenian", "so": "somali", "es": "spanish", "su": "sundanese", "sw": "swahili", "sv": "swedish", "tg": "tajik", "ta": "tamil", "te": "telugu", "th": "thai", "tr": "turkish", "uk": "ukrainian", "ur": "urdu", "uz": "uzbek", "vi": "vietnamese", "cy": "welsh", "xh": "xhosa", "yi": "yiddish", "yo": "yoruba", "zu": "zulu", "fil": "filipino", "he": "hebrew"}
-
         res = dict((v,k) for k,v in languages.items())
         for token in doc:
             if token.text.lower() in languages.values():
@@ -83,7 +82,7 @@ def keywordExtraction(categoryNumber):
     if categoryNumber == categories.index("genre"):
         genres = [ "action", "adventure","animation","comedy","crime","documentary","drama","family","fantasy","history","horror","music","mystery","romance","science fiction","sci-fi","thriller","war","western"]
 
-        genre = ""
+        genre = None
         for token in doc:
             if token.text.lower() in genres:
                 genre = token.text.lower()
@@ -93,7 +92,7 @@ def keywordExtraction(categoryNumber):
 
     # For Release date
     if categoryNumber == categories.index("release_date"):
-        releaseDate = ""
+        releaseDate = None
         keywords = ["old", "modern", "classic", "new", "newer"]
         for key in keywords:
             if key in sentence.lower():
@@ -103,12 +102,21 @@ def keywordExtraction(categoryNumber):
                     releaseDate = ["gte", "2015-01-01"]
         return releaseDate
 
-    # TODO For Age restriction
+    # For Age restriction
+    if categoryNumber == categories.index("age_restriction"):
+        ageRestriction = False
+        childFilter = ["child", "baby", "youngster", "adolescent", "teenager", "youth", "toddler", "G", "PG-13", "PG13", "family"]
+        for token in doc:
+            if token.lemma_ in childFilter:
+                ageRestriction = True
+
+        return ageRestriction
+
 
 
     # For runtime
     if categoryNumber == categories.index("runtime"):
-        runtime = ""
+        runtime = None
         for token in doc:
             if token.lemma_ == "short":
                 runtime = ["lte", "90"]
@@ -120,7 +128,7 @@ def keywordExtraction(categoryNumber):
 def createResponseJson(categoryNumber, keywords):
     jsonData = {}
 
-    if categoryNumber == categories.index("genre"):
+    if categoryNumber == categories.index("genre") and keywords is not None:
         genres = []
         genres.append(keywords)
         jsonData['genres'] = genres
@@ -141,7 +149,7 @@ def createResponseJson(categoryNumber, keywords):
     else:
         jsonData['cast'] = []
 
-    if categoryNumber == categories.index("release_date"):
+    if categoryNumber == categories.index("release_date") and keywords is not None:
         release_date = []
         release_date.append(keywords)
         jsonData['release_date'] = release_date
@@ -176,6 +184,7 @@ def createResponseJson(categoryNumber, keywords):
 
 classificationProbabilities, mainPredictionCategoryNumber = categoryClassifier()
 keywords = keywordExtraction(mainPredictionCategoryNumber)
+print(mainPredictionCategoryNumber)
 print(createResponseJson(mainPredictionCategoryNumber, keywords))
 
 
