@@ -24,14 +24,15 @@ app.use(cors({
 // Elastic Search
 var elasticsearch = require('elasticsearch');
 var client = new elasticsearch.Client({
-   hosts: [ 'http://moviezen:OdIO8m8bnKknUUDu1kMT@[2a01:4ff:f0:bdb::1]:9200']
+   hosts: [ 'http://moviezen:OdIO8m8bnKknUUDu1kMT@moviezen.dafoe.me:9200']
 });
-elastic.pingElastic(client)
+//elastic.pingElastic(client)
 
 
 
 // PYTHON SCRIPT
 let {PythonShell} = require('python-shell');
+const { response } = require('express');
 
 // Convert strings to tokens and get keywords
 function runPy(sentence){
@@ -76,7 +77,6 @@ io.on('connection', function(socket) {
       return new Promise(async function(resolve, reject){
 
         // Check if message has the genre
-        data.requirements = checkGenre(data.message, data.requirements);
 
         // Remove the genre from the message so it doesn't clutter tokens
         for (var i = 0; i < data.requirements.genre.length; i++){
@@ -84,23 +84,25 @@ io.on('connection', function(socket) {
         }
 
         //searchTokens is a json string e.g. {"genre":["action","comedy"]} //searchTokens.genre[0]
-        let searchTokensStr = msgProcessor.sentenceClassify(data.message);
-        let searchTokens = JSON.parse(searchTokensStr);
+        msgProcessor.sentenceClassify(data.message).then(searchTokensStr => {
+          console.log(searchTokensStr);
+          let searchTokens = JSON.parse(searchTokensStr);
 
-        //Perform search on given user sentence
-        elastic.elasticSearchQuery(searchTokens, client).then(
+          // Append searchTokens to previous searchTokens
+          data.searchTokens = combineArray(data, searchTokens);
+
+          // Check if requirements have been met
+          data.requirements = checkRequirements(searchTokens);
+
+          //Perform search on given user sentence
+          elastic.elasticSearchQuery(data, client).then(
             result => {
               showESResult(result);
             },
             error=>console.log(error)
         )
-
-
-
-        if(data.requirements.genre.length == 0){
-          data.bot_message = "What kind of genre are you feeling right now?";
-          data.guided_ans = ["I want action movies", "I want comedy movies", "I want horror movies"];
-        } 
+        })
+       
         // else if(requirements.release_date.length == 0){
         //   data.bot_message = "Do you have any preference on how old the movie is?";
         //   data.guided_ans = ["I want movies released in the past year", "I want movies released in the last 10 years", "I don't have a preference"];
@@ -120,7 +122,7 @@ io.on('connection', function(socket) {
 
 
 
-      })
+      }).catch(()=> {console.log("FAILED")})
         // send nlp 
         // return back to client
     });
@@ -134,7 +136,7 @@ function showESResult(result){
         result.ids.push(item._id);
       }
     }
-    
+
     // Only display top 5 recommendation
     result.response = result.response.slice(0, 5);
 
@@ -160,35 +162,30 @@ function showESResult(result){
   }
 }
 
+// Check if JSON meets the requirements to complete a prediction
+// Requirements are in the order of ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
+function checkRequirements(data){
+  data.requirements[0] = data.searchTokens.genre.length > 0 ? true: false;
+  data.requirements[1] = data.searchTokens.production_company.length > 0 ? true: false;
+  data.requirements[2] = data.searchTokens.cast.length > 0 ? true: false;
+  data.requirements[3] = data.searchTokens.release_date.length > 0 ? true: false;
+  data.requirements[4] = data.searchTokens.original_language.length > 0 ? true: false;
+  data.requirements[5] = data.searchTokens.adult.length > 0 ? true: false;
+  data.requirements[6] = data.searchTokens.runtime.length > 0 ? true: false;
 
-// Placeholder to test guided answers
-function checkGenre(sentence, req){
-  var genres = [ "action", "adventure","animation","comedy","crime","documentary","drama","family","fantasy","history","horror","music","mystery","romance","science fiction","sci-fi","thriller","war","western"];
-  for(var j = 0; j < genres.length; j++){
-    // Check if sentence has the genre
-    if(sentence.includes(genres[j])){
-      req.genre.push(genres[j]);
-    }  
-  }
-
-  console.log(req);
-  return req;
+  return data;
 }
 
-function checkRequirements(tokens, req){
-  var genres = [ "action", "adventure","animation","comedy","crime","documentary","drama","family","fantasy","history","horror","music","mystery","romance","science fiction","sci-fi","thriller","war","western"];
-  for(var i = 0; i < tokens.length; i++){
-    // Check if message has the genre wanted
-    for(var j = 0; j < genres.length; j++){
-      // Check if token has the genre
-      if(tokens[i].includes(genres[j])){
-        req.genre.push(genres[j]);
-      }  
-    }
-  }
-
-  console.log(req);
-  return req;
+// Append search tokens by getting the union of the arrays for each category
+function combineArray(data, newSearchTokens){
+  data.searchTokens.genre = [...new Set([...data.searchTokens.genre, ...newSearchTokens.searchTokens.genre])];
+  data.searchTokens.production_company = [...new Set([...data.searchTokens.production_company, ...newSearchTokens.searchTokens.production_company])];
+  data.searchTokens.cast = [...new Set([...data.searchTokens.cast, ...newSearchTokens.searchTokens.cast])];
+  data.searchTokens.release_date = [...new Set([...data.searchTokens.release_date, ...newSearchTokens.searchTokens.release_date])];
+  data.searchTokens.original_language = [...new Set([...data.searchTokens.original_language, ...newSearchTokens.searchTokens.original_language])];
+  data.searchTokens.adult = [...new Set([...data.searchTokens.adult, ...newSearchTokens.searchTokens.adult])];
+  data.searchTokens.runtime = [...new Set([...data.searchTokens.runtime, ...newSearchTokens.searchTokens.runtime])];
+  return data;
 }
 
 
@@ -206,7 +203,6 @@ app.get('/movies-default', (req, res)=>{
   console.log("api received")
   elastic.elasticSearchPopular(client).then(
     result=>{
-      //console.log(result)
       res.json(result)
     },
     error=>res.send(error)
