@@ -13,8 +13,8 @@ nlp = spacy.load("en_core_web_trf")
 
 # Load a ClassificationModel
 model = ClassificationModel(
-    #"bert", "./server/bert_model" # running with sc-serve
-    "bert", "./bert_model" # running locally
+    "bert", "./server/bert_model" # running with sc-serve
+    #"bert", "./bert_model" # running locally
 )
 
 #input sentence
@@ -59,10 +59,10 @@ def keywordExtraction(categoryNumber):
             return [doc[consecutive[0]:consecutive[-1]+1] for consecutive in consecutives]
 
         ppn = extract_proper_nouns(doc)
-        print(ppn)
+        #print(ppn)
         if len(ppn) > 0:
             #print("Proper noun: " + str(ppn[0]))
-            return str(ppn)
+            return str(ppn[0])
 
 
     # For language detection
@@ -131,51 +131,51 @@ def createResponseJson(categoryNumber, keywords):
     if categoryNumber == categories.index("genre") and keywords is not None:
         genres = []
         genres.append(keywords)
-        jsonData['genres'] = genres
+        jsonData["genre"] = genres
     else:
-        jsonData['genres'] = []
+        jsonData["genre"] = []
 
     if categoryNumber == categories.index("production_company"):
         production_companys = []
         production_companys.append(keywords)
-        jsonData['production_company'] = production_companys
+        jsonData["production_company"] = production_companys
     else:
-        jsonData['production_company'] = []
+        jsonData["production_company"] = []
 
     if categoryNumber == categories.index("cast"):
         cast = []
         cast.append(keywords)
-        jsonData['cast'] = cast
+        jsonData["cast"] = cast
     else:
-        jsonData['cast'] = []
+        jsonData["cast"] = []
 
     if categoryNumber == categories.index("release_date") and keywords is not None:
         release_date = []
         release_date.append(keywords)
-        jsonData['release_date'] = release_date
+        jsonData["release_date"] = release_date
     else:
-        jsonData['release_date'] = []
+        jsonData["release_date"] = []
 
     if categoryNumber == categories.index("language"):
         language = []
         language.append(keywords)
-        jsonData['original_language'] = language
+        jsonData["original_language"] = language
     else:
-        jsonData['original_language'] = []
+        jsonData["original_language"] = []
 
     if categoryNumber == categories.index("age_restriction"):
         age_restriction = []
         age_restriction.append(keywords)
-        jsonData['adult'] = age_restriction
+        jsonData["adult"] = age_restriction
     else:
-        jsonData['adult'] = []
+        jsonData["adult"] = []
 
-    if categoryNumber == categories.index("runtime"):
+    if categoryNumber == categories.index("runtime") and keywords is not None:
         runtime = []
         runtime.append(keywords)
-        jsonData['runtime'] = runtime
+        jsonData["runtime"] = runtime
     else:
-        jsonData['runtime'] = []
+        jsonData["runtime"] = []
 
 
     return jsonData
@@ -184,7 +184,7 @@ def createResponseJson(categoryNumber, keywords):
 
 classificationProbabilities, mainPredictionCategoryNumber = categoryClassifier()
 keywords = keywordExtraction(mainPredictionCategoryNumber)
-print(mainPredictionCategoryNumber)
+#print(mainPredictionCategoryNumber)
 print(createResponseJson(mainPredictionCategoryNumber, keywords))
 
 

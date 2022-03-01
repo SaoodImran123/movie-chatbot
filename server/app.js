@@ -76,7 +76,18 @@ io.on('connection', function(socket) {
     socket.on('SEND_MESSAGE', function(data) {
       return new Promise(async function(resolve, reject){
 
-        // Check if message has the genre
+
+        // Initialize search tokens
+        if (data.searchTokens == null){
+          data.searchTokens = [];
+          data.searchTokens.genre = [];
+          data.searchTokens.production_company = [];
+          data.searchTokens.cast = [];
+          data.searchTokens.release_date = [];
+          data.searchTokens.original_language = [];
+          data.searchTokens.adult = [];
+          data.searchTokens.runtime = [];
+        }
 
         // Remove the genre from the message so it doesn't clutter tokens
         for (var i = 0; i < data.requirements.genre.length; i++){
@@ -89,10 +100,11 @@ io.on('connection', function(socket) {
           let searchTokens = JSON.parse(searchTokensStr);
 
           // Append searchTokens to previous searchTokens
+          console.log(searchTokens)
           data.searchTokens = combineArray(data, searchTokens);
 
           // Check if requirements have been met
-          data.requirements = checkRequirements(searchTokens);
+          data.requirements = checkRequirements(data);
 
           //Perform search on given user sentence
           elastic.elasticSearchQuery(data, client).then(
@@ -165,6 +177,8 @@ function showESResult(result){
 // Check if JSON meets the requirements to complete a prediction
 // Requirements are in the order of ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
 function checkRequirements(data){
+  console.log("Logging data");
+  console.log(data);
   data.requirements[0] = data.searchTokens.genre.length > 0 ? true: false;
   data.requirements[1] = data.searchTokens.production_company.length > 0 ? true: false;
   data.requirements[2] = data.searchTokens.cast.length > 0 ? true: false;
@@ -178,13 +192,15 @@ function checkRequirements(data){
 
 // Append search tokens by getting the union of the arrays for each category
 function combineArray(data, newSearchTokens){
-  data.searchTokens.genre = [...new Set([...data.searchTokens.genre, ...newSearchTokens.searchTokens.genre])];
-  data.searchTokens.production_company = [...new Set([...data.searchTokens.production_company, ...newSearchTokens.searchTokens.production_company])];
-  data.searchTokens.cast = [...new Set([...data.searchTokens.cast, ...newSearchTokens.searchTokens.cast])];
-  data.searchTokens.release_date = [...new Set([...data.searchTokens.release_date, ...newSearchTokens.searchTokens.release_date])];
-  data.searchTokens.original_language = [...new Set([...data.searchTokens.original_language, ...newSearchTokens.searchTokens.original_language])];
-  data.searchTokens.adult = [...new Set([...data.searchTokens.adult, ...newSearchTokens.searchTokens.adult])];
-  data.searchTokens.runtime = [...new Set([...data.searchTokens.runtime, ...newSearchTokens.searchTokens.runtime])];
+  data.searchTokens.genre = [...new Set([...data.searchTokens.genre, ...newSearchTokens.genre])];
+  data.searchTokens.production_company = [...new Set([...data.searchTokens.production_company, ...newSearchTokens.production_company])];
+  data.searchTokens.cast = [...new Set([...data.searchTokens.cast, ...newSearchTokens.cast])];
+  data.searchTokens.release_date = [...new Set([...data.searchTokens.release_date, ...newSearchTokens.release_date])];
+  data.searchTokens.original_language = [...new Set([...data.searchTokens.original_language, ...newSearchTokens.original_language])];
+  data.searchTokens.adult = [...new Set([...data.searchTokens.adult, ...newSearchTokens.adult])];
+  data.searchTokens.runtime = [...new Set([...data.searchTokens.runtime, ...newSearchTokens.runtime])];
+  console.log("logging data after combine");
+  console.log(data);
   return data;
 }
 

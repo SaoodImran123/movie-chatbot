@@ -17,7 +17,7 @@ module.exports = {
             if (err) throw err;
 
             //Return results json
-            resolve(results[0]);
+            resolve(results[0].replace(/'/g, "\""));
         });
     })
     }
