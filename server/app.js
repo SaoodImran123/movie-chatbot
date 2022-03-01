@@ -76,7 +76,6 @@ io.on('connection', function(socket) {
     socket.on('SEND_MESSAGE', function(data) {
       return new Promise(async function(resolve, reject){
 
-
         // Initialize search tokens
         if (data.searchTokens == null){
           data.searchTokens = [];
@@ -87,11 +86,7 @@ io.on('connection', function(socket) {
           data.searchTokens.original_language = [];
           data.searchTokens.adult = [];
           data.searchTokens.runtime = [];
-        }
-
-        // Remove the genre from the message so it doesn't clutter tokens
-        for (var i = 0; i < data.requirements.genre.length; i++){
-          data.message = data.message.replace(data.requirements.genre[i], "");
+          data.requirements = []
         }
 
         //searchTokens is a json string e.g. {"genre":["action","comedy"]} //searchTokens.genre[0]
@@ -101,10 +96,10 @@ io.on('connection', function(socket) {
 
           // Append searchTokens to previous searchTokens
           console.log(searchTokens)
-          data.searchTokens = combineArray(data, searchTokens);
+          data = combineArray(data, searchTokens);
 
           // Check if requirements have been met
-          data.requirements = checkRequirements(data);
+          data = checkRequirements(data);
 
           //Perform search on given user sentence
           elastic.elasticSearchQuery(data, client).then(
@@ -177,8 +172,6 @@ function showESResult(result){
 // Check if JSON meets the requirements to complete a prediction
 // Requirements are in the order of ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
 function checkRequirements(data){
-  console.log("Logging data");
-  console.log(data);
   data.requirements[0] = data.searchTokens.genre.length > 0 ? true: false;
   data.requirements[1] = data.searchTokens.production_company.length > 0 ? true: false;
   data.requirements[2] = data.searchTokens.cast.length > 0 ? true: false;
@@ -199,8 +192,6 @@ function combineArray(data, newSearchTokens){
   data.searchTokens.original_language = [...new Set([...data.searchTokens.original_language, ...newSearchTokens.original_language])];
   data.searchTokens.adult = [...new Set([...data.searchTokens.adult, ...newSearchTokens.adult])];
   data.searchTokens.runtime = [...new Set([...data.searchTokens.runtime, ...newSearchTokens.runtime])];
-  console.log("logging data after combine");
-  console.log(data);
   return data;
 }
 
