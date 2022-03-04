@@ -101,9 +101,9 @@ module.exports = {
                 var production_company = data.searchTokens.production_company;
                 for (let i = 0; i < production_company.length; i++){
                     if (i > 0){
-                        should.push({"term": {"production_companies.name": production_company[i]}});
+                        should.push({"match" :{"production_companies.name": {"query": production_company[i], "fuzziness": 2}}});
                     }else{
-                        must.push({"term": {"production_companies.name": production_company[i]}});
+                        must.push({"match" :{"production_companies.name": {"query": production_company[i], "fuzziness": 2}}});
                     }
                 }
             }
@@ -113,9 +113,9 @@ module.exports = {
                 var cast = data.searchTokens.cast;
                 for (let i = 0; i < cast.length; i++){
                     if (i > 0){
-                        should.push({"term": {'cast.name': cast[i]}});
+                        should.push({"match" :{"cast.name": {"query": cast[i], "fuzziness": 2}}});
                     }else{
-                        must.push({"term": {'cast.name': cast[i]}});
+                        must.push({"match" :{"cast.name": {"query": cast[i], "fuzziness": 2}}});
                     }
                 }
             }
@@ -168,9 +168,9 @@ module.exports = {
                 var runtime = data.searchTokens.runtime;
                 for (let i = 0; i < runtime.length; i++){
                     if (i > 0){
-                        should.push({"term": {"runtime": runtime[i]}});
+                        should.push({range: {"runtime": {"${runtime[i][0]}": runtime[i][1]}}});
                     }else{
-                        must.push({"term": {"runtime": runtime[i]}});
+                        must.push({range: {"runtime": {"${runtime[i][0]}": runtime[i][1]}}});
                     }
                 }
             }else{
