@@ -87,7 +87,7 @@ module.exports = {
             // Search for genre
             if(data.searchTokens.genre.length > 0){
                 var genres = data.searchTokens.genre;
-                for (var i = 0; i < genres.length; i++){
+                for (let i = 0; i < genres.length; i++){
                     if (i > 0){
                         should.push({"term": {"genres.name": genres[i]}});
                     }else{
@@ -99,7 +99,7 @@ module.exports = {
             // Search for production company
             if(data.searchTokens.production_company.length > 0){
                 var production_company = data.searchTokens.production_company;
-                for (var i = 0; i < production_company.length; i++){
+                for (let i = 0; i < production_company.length; i++){
                     if (i > 0){
                         should.push({"term": {"production_companies.name": production_company[i]}});
                     }else{
@@ -111,11 +111,11 @@ module.exports = {
             // Search for cast
             if(data.searchTokens.cast.length > 0){
                 var cast = data.searchTokens.cast;
-                for (var i = 0; i < cast.length; i++){
+                for (let i = 0; i < cast.length; i++){
                     if (i > 0){
-                        should.push({"term": {"cast.name": cast[i]}});
+                        should.push({"term": {'cast.name': cast[i]}});
                     }else{
-                        must.push({"term": {"cast.name": cast[i]}});
+                        must.push({"term": {'cast.name': cast[i]}});
                     }
                 }
             }
@@ -123,22 +123,23 @@ module.exports = {
             // Search for release date
             if(data.searchTokens.release_date.length > 0){
                 var release_date = data.searchTokens.release_date;
-                for (var i = 0; i < release_date.length; i++){
+                for (let i = 0; i < release_date.length; i++){
                     if (i > 0){
-                        should.push({"term": {"release_date": release_date[i]}});
-                    }else{
-                        must.push({"term": {"release_date": release_date[i]}});
+                        should.push({range: {"release_date": {"${release_date[i][0]}": release_date[i][1]}}});
+                    } else{
+                        must.push({range: {"release_date": {"${release_date[i][0]}": release_date[i][1]}}});
                     }
+
                 }
             }else{
-                 // Default runtime should be greater than 60 mins
-                 filter.push( {range: {"runtime": {"gte": "60"}}});
+                // Default release date should be newer than 1990
+                filter.push({range: {"release_date": {"gte": "1990-01-01"}}});
             }
 
             // Search for language
             if(data.searchTokens.original_language.length > 0){
                 var original_language = data.searchTokens.original_language;
-                for (var i = 0; i < original_language.length; i++){
+                for (let i = 0; i < original_language.length; i++){
                     if (i > 0){
                         should.push({"term": {"original_language": original_language[i]}});
                     }else{
@@ -146,18 +147,18 @@ module.exports = {
                     }
                 }
             }else{
-                // Default release date should be newer than 1990
+                // Default language should be english
                 filter.push({term: {"original_language": "en"}});
             }
 
             // Search for adult
             if(data.searchTokens.adult.length > 0){
                 var adult = data.searchTokens.adult;
-                for (var i = 0; i < adult.length; i++){
+                for (let i = 0; i < adult.length; i++){
                     if (i > 0){
-                        should.push({"term": {"adult": adult[i]}});
+                        should.push({"term": {"adult": adult[i] == "true" ? true : false}});
                     }else{
-                        must.push({"term": {"adult": adult[i]}});
+                        must.push({"term": {"adult": adult[i] == "true" ? true : false}});
                     }
                 }
             }
@@ -165,7 +166,7 @@ module.exports = {
             // Search for runtime
             if(data.searchTokens.runtime.length > 0){
                 var runtime = data.searchTokens.runtime;
-                for (var i = 0; i < runtime.length; i++){
+                for (let i = 0; i < runtime.length; i++){
                     if (i > 0){
                         should.push({"term": {"runtime": runtime[i]}});
                     }else{
@@ -173,14 +174,14 @@ module.exports = {
                     }
                 }
             }else{
-                // Default release date should be newer than 1990
-                filter.push({range: {"release_date": {"gte": "1990-01-01"}}});
+                // Default runtime should be greater than 60 mins
+                filter.push( {range: {"runtime": {"gte": "60"}}});
             }
 
-            client.search({
+            var query = {
                 index: 'tmdb_movies',
                 size: '5',
-                body:{
+                body: {
                     query: {
                         bool: {
                             must: must,
@@ -189,7 +190,11 @@ module.exports = {
                         }
                     }
                 }
-            }).then(function(resp) {
+            };
+            console.log("Elastic Query");
+            console.log(JSON.stringify(query));
+            client.search(JSON.stringify(query)).then(function(resp) {
+                console.log("ES: ")
                 console.log(resp);
                 //resturns an array of movie hits
                 data.response = resp.hits.hits;

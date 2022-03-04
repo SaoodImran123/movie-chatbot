@@ -86,6 +86,7 @@ io.on('connection', function(socket) {
           data.searchTokens.original_language = [];
           data.searchTokens.adult = [];
           data.searchTokens.runtime = [];
+          data.searchTokens.unclassified = [];
           data.requirements = []
         }
 
@@ -148,9 +149,11 @@ function showESResult(result){
     result.response = result.response.slice(0, 5);
 
     // Create final string when all requirements are fulfilled
-    if(result.requirements.genre.length > 0 && result.response.length > 0){
+    let isTrue = result.requirements.every(function (e) {
+      return e == true;
+    });
+    if(isTrue){
       result.bot_message =  "I recommend "; 
-      console.log(result.response.length);
       for(var i =0; i < result.response.length; i++){
         if(i < result.response.length -1){
           result.bot_message += result.response[i]._source.title + ", ";
