@@ -101,9 +101,9 @@ module.exports = {
                 var production_company = data.searchTokens.production_company;
                 for (let i = 0; i < production_company.length; i++){
                     if (i > 0){
-                        should.push({"match" :{"production_companies.name": {"query": production_company[i], "fuzziness": 2}}});
+                        should.push({"term": {"production_companies.name.keyword": {"value": production_company[i], "case_insensitive": true}}});
                     }else{
-                        must.push({"match" :{"production_companies.name": {"query": production_company[i], "fuzziness": 2}}});
+                        must.push({"term": {"production_companies.name.keyword": {"value": production_company[i], "case_insensitive": true}}});
                     }
                 }
             }
@@ -113,9 +113,9 @@ module.exports = {
                 var cast = data.searchTokens.cast;
                 for (let i = 0; i < cast.length; i++){
                     if (i > 0){
-                        should.push({"match" :{"cast.name": {"query": cast[i], "fuzziness": 2}}});
+                        should.push({"term": {"cast.name.keyword": {"value": cast[i], "case_insensitive": true}}});
                     }else{
-                        must.push({"match" :{"cast.name": {"query": cast[i], "fuzziness": 2}}});
+                        must.push({"term": {"cast.name.keyword": {"value": cast[i], "case_insensitive": true}}});
                     }
                 }
             }

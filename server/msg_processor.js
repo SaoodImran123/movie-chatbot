@@ -12,7 +12,7 @@ module.exports = {
             args: [sentence]//Approach to send JSON as when I tried 'json' in mode I was getting error.
         };
 
-        PythonShell.run('classify.py', options, function (err, results) {
+        PythonShell.run('NeuralNetwork.py', options, function (err, results) {
             //If there is an issue running the script throw an error
             if (err) throw err;
 
