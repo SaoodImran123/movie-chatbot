@@ -188,12 +188,16 @@ module.exports = {
                             should: should,
                             filter: filter
                         }
-                    }
+                    },
+                    sort: [
+                        {"_score": {"order" : "desc"}},
+                        {"popularity": {"order" : "desc"}}
+                    ]
                 }
             };
             console.log("Elastic Query");
             console.log(JSON.stringify(query));
-            client.search(JSON.stringify(query)).then(function(resp) {
+            client.search(query).then(function(resp) {
                 console.log("ES: ")
                 console.log(resp);
                 //resturns an array of movie hits

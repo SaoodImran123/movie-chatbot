@@ -79,8 +79,8 @@ export default {
             createdTime: '',
             socket : io('ws://'+window.location.hostname+':3050'),
             ids: [],
-            tokens: '',
-            requirements: {genre: [], release_date: [], occassion:[], mood: []}
+            searchTokens: {genre: [], production_company: [], cast:[], release_date: [], original_language: [], adult: [], runtime:[], unclassified: []},
+            requirements: []
         }
     },
     methods: {
@@ -91,7 +91,7 @@ export default {
                 message: msg || this.message,
                 time: this.time,
                 ids: this.ids,
-                tokens: this.tokens,
+                searchTokens: this.searchTokens,
                 requirements: this.requirements
             });
             var data ={message: msg || this.message, time: this.time};
@@ -110,7 +110,7 @@ export default {
             console.log(data);
             this.messages = [...this.messages, data];
             this.ids = data.ids;
-            this.tokens = data.tokens;
+            this.searchTokens = data.searchTokens;
             this.requirements = data.requirements;
             this.message = "";
 

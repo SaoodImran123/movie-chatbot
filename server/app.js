@@ -76,27 +76,11 @@ io.on('connection', function(socket) {
     socket.on('SEND_MESSAGE', function(data) {
       return new Promise(async function(resolve, reject){
 
-        // Initialize search tokens
-        if (data.searchTokens == null){
-          data.searchTokens = [];
-          data.searchTokens.genre = [];
-          data.searchTokens.production_company = [];
-          data.searchTokens.cast = [];
-          data.searchTokens.release_date = [];
-          data.searchTokens.original_language = [];
-          data.searchTokens.adult = [];
-          data.searchTokens.runtime = [];
-          data.searchTokens.unclassified = [];
-          data.requirements = []
-        }
-
         //searchTokens is a json string e.g. {"genre":["action","comedy"]} //searchTokens.genre[0]
         msgProcessor.sentenceClassify(data.message).then(searchTokensStr => {
-          console.log(searchTokensStr);
           let searchTokens = JSON.parse(searchTokensStr);
 
           // Append searchTokens to previous searchTokens
-          console.log(searchTokens)
           data = combineArray(data, searchTokens);
 
           // Check if requirements have been met
@@ -138,13 +122,6 @@ io.on('connection', function(socket) {
 
 function showESResult(result){
   try {
-    result.ids = [];
-    for (var item of result.response){
-      if(!result.ids.includes(item._id)){
-        result.ids.push(item._id);
-      }
-    }
-
     // Only display top 5 recommendation
     result.response = result.response.slice(0, 5);
 
