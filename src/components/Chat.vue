@@ -34,6 +34,10 @@
                             </div>
                         </div>
                     </div>
+                    <div class="media media-chat" v-if="loading">
+                        <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                        <pulse-loader :loading="loading" :color="color" :size="size"></pulse-loader>
+                    </div>
                 </div>
                 <div class="publisher"> 
                     <form @submit.prevent="sendMessage">
@@ -48,6 +52,7 @@
 </template>
 
 <script>
+import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import io from 'socket.io-client';
 function getCurrentTime(){
     const today = new Date();
@@ -71,6 +76,9 @@ function getCurrentDate(){
     return date;
 }
 export default {
+    components:{
+        PulseLoader
+    },
     data() {
         return {
             message: '',
@@ -79,8 +87,9 @@ export default {
             createdTime: '',
             socket : io('ws://'+window.location.hostname+':3050'),
             ids: [],
-            searchTokens: {genre: [], production_company: [], cast:[], release_date: [], original_language: [], adult: [], runtime:[], unclassified: []},
-            requirements: []
+            tokens: '',
+            requirements: {genre: [], release_date: [], occassion:[], mood: []},
+            loading:false
         }
     },
     methods: {
@@ -91,7 +100,7 @@ export default {
                 message: msg || this.message,
                 time: this.time,
                 ids: this.ids,
-                searchTokens: this.searchTokens,
+                tokens: this.tokens,
                 requirements: this.requirements
             });
             var data ={message: msg || this.message, time: this.time};
@@ -99,6 +108,7 @@ export default {
             console.log(this.messages);
             // Clears input box
             this.message = ''
+            this.loading = true;
         }
     },
     created() {
@@ -110,12 +120,13 @@ export default {
             console.log(data);
             this.messages = [...this.messages, data];
             this.ids = data.ids;
-            this.searchTokens = data.searchTokens;
+            this.tokens = data.tokens;
             this.requirements = data.requirements;
             this.message = "";
 
             // Send data to Home Page
             this.$emit('send-recommendations', data.response);
+            this.loading = false;
         });
     },
     updated(){
