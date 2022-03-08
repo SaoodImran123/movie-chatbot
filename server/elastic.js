@@ -125,9 +125,21 @@ module.exports = {
                 var release_date = data.searchTokens.release_date;
                 for (let i = 0; i < release_date.length; i++){
                     if (i > 0){
-                        should.push({range: {"release_date": {"${release_date[i][0]}": release_date[i][1]}}});
+                        if(release_date[0] == "eq"){
+                            // Range between the given date
+                            should.push({range: {"release_date": {"gte": release_date[1]}}});
+                            should.push({range: {"release_date": {"lte": (new Date(release_date[1]).getDate() + parseInt(366)).toString()}}});
+                        }else{
+                            should.push({range: {"release_date": {[release_date[0]]: release_date[1]}}});
+                        }
                     } else{
-                        must.push({range: {"release_date": {"${release_date[i][0]}": release_date[i][1]}}});
+                        if(release_date[0] == "eq"){
+                            // Range between the given date
+                            must.push({range: {"release_date": {"gte": release_date[1]}}});
+                            must.push({range: {"release_date": {"lte": (new Date(release_date[1]).getDate() + parseInt(366)).toString()}}});
+                        }else{
+                            must.push({range: {"release_date": {[release_date[0]]: release_date[1]}}});
+                        }
                     }
 
                 }
@@ -168,9 +180,21 @@ module.exports = {
                 var runtime = data.searchTokens.runtime;
                 for (let i = 0; i < runtime.length; i++){
                     if (i > 0){
-                        should.push({range: {"runtime": {"${runtime[i][0]}": runtime[i][1]}}});
+                        if(runtime[0] == "eq"){
+                            // Range between the given runtime
+                            should.push({range: {"runtime": {"gte": (parseInt(runtime[1])-10).toString()}}});
+                            should.push({range: {"runtime": {"lte": (parseInt(runtime[1])+10).toString()}}});
+                        }else{
+                            should.push({range: {"runtime": {[runtime[0]]: runtime[1]}}});
+                        }
                     }else{
-                        must.push({range: {"runtime": {"${runtime[i][0]}": runtime[i][1]}}});
+                        if(runtime[0] == "eq"){
+                            // Range between the given runtime
+                            must.push({range: {"runtime": {"gte": (parseInt(runtime[1])-10).toString()}}});
+                            must.push({range: {"runtime": {"lte": (parseInt(runtime[1])+10).toString()}}});
+                        }else{
+                            must.push({range: {"runtime": {[runtime[0]]: runtime[1]}}});
+                        }
                     }
                 }
             }else{

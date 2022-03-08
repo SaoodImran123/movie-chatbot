@@ -7,6 +7,7 @@ from difflib import SequenceMatcher
 import truecase
 import re
 import sys
+from dateutil.parser import parse
 
 # Constants
 categories = ["genre", "production_company", "cast", "release_date", "language", "age_restriction", "runtime"]
@@ -65,40 +66,66 @@ def checkCast(castNameSet, ppn):
                     break
     return cast
 
-def checkRuntime(user_tokens, runTimeWords, user_text):
-    requestType = ["less than", "greater than", "longer", "shorter", "no more", "more", "long", "short"]
-    type =""
-
+def checkRuntime(user_text):
+    requestType = ["less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal"]
+    type ="eq"
+    finalMins = 0
     for z in requestType:
         if z in user_text:
-            type = z
+            if z in ["greater than", "longer", "more", "long"]:
+                type = "gte"
+            elif z in ["less than","shorter", "no more","short"]:
+                type = "lte"
+            
+
             break
-    timeMention1 = re.findall("\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+min|\d+\smin|\d+m",user_text)
-    if timeMention1:
+    #timeMention1 = re.findall("\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+min|\d+\smin|\d+m",user_text)
+    hrMinAmount = re.findall("\d+:\d+",user_text)
+    hrAmount = re.findall("\d+hr|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr",user_text)
+    minAmount = re.findall("\d+min|\d+\smin|\d+m",user_text)
+    if hrAmount:
+        hrs = re.findall("[-+]?(?:\d*\.\d+|\d+)",hrAmount[0])
+        finalMins += int(float(hrs[0])*60.0)
         # Convert Hr to mins
         # Need to check greater or less than
         # return in this format: ["lte", timeMention1[0]] or ["eq", timeMention1[0]]
-        re.sub("\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+min|\d+\smin|\d+m", '', timeMention1) 
-        return ["Runtime request: " + type + " "+ timeMention1[0]]
-    
-    for x in range(0,len(user_tokens)):  
-        for y in runTimeWords:
-            if str(user_tokens[x]).strip().lower() == str(y).strip().lower():
-                if user_tokens[x] in ["hour", "hours", "hr", "min", "mins"]:
-                    return ["Runtime request: " + type + " "+user_tokens[x-1] + " " + user_tokens[x]]
-                else:
-                    # if words like short return ["lte", "90"]
-                    # if words like long return ["gte", "90"]
-                    return [type, "90"]
+    if minAmount:
+        minsString = ''.join((ch if ch in '0123456789.-e' else ' ') for ch in minAmount[0])
+        mins = [float(i) for i in minsString.split()]
+        finalMins += int(mins[0])
+    if hrMinAmount and not (minAmount or hrAmount):
+        hrsConvert = hrMinAmount[0].split(":")[0]
+        minsConvert = hrMinAmount[0].split(":")[1]
+        finalhrs = int(int(hrsConvert)*60) + int(minsConvert)
+        return [type, str(finalhrs)]
+    if finalMins > 0:
+        return [type, str(finalMins)]
     return []
+    
 
 # if user specified a year like 2015 return [["gte", "2015-01-01"], ["lte", "2016-01-01"]]
 # if user specifies a year greater than 2015 return just ["gte", "2015-01-01"]
 # Maybe add dates like ex: user enter "I want movies released in july 4, 1999" return ["eq", "1999-07-04"]
 # if words like old return ["lte", "2005-01-01"] by default
 # if words like new return ["gte", "2015-01-01"]
-def checkReleaseDate():
-    return []
+def checkReleaseDate(user_text):
+    requestType = ["made in", "released in", "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after"]
+    type ="eq"
+    for z in requestType:
+        if z in user_text:
+            if z in ["newer than", "made after","created after"]:
+                type = "gte"
+            elif z in ["older than", "from before", "made before","created before"]:
+                type = "lte"
+    try:
+        date = parse(user_text,fuzzy=True)
+        today = date.today()
+        if date.month == today.month and date.day == today.day:
+            date = date.replace(month=1, day=1)
+            date = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
+        return [type, date]
+    except ValueError:
+        return []
 
 
 with open(r"server/cast.txt", "rb") as f:
@@ -113,17 +140,9 @@ with open(r"server/genres.txt", "rb") as f:
     genreName = pickle.load(f)
 genreName = set(genreName)
 
-with open(r"server/runTimeWords.txt", "rb") as f:
-    runTimeWords = pickle.load(f)
-runTimeWords = set(runTimeWords)
-
 with open(r"server/ageRestrictionWords.txt", "rb") as f:
     ageRestrictionWords = pickle.load(f)
 ageRestrictionWords = set(ageRestrictionWords)
-
-with open(r"server/releaseDateWords.txt", "rb") as f:
-    releaseDateWords = pickle.load(f)
-releaseDateWords = set(releaseDateWords)
 
 with open(r"server/languages.txt", "rb") as f:
     languageName = pickle.load(f)
@@ -142,17 +161,15 @@ ppn = extract_proper_nouns(doc)
 ppnString = [x.text.strip().lower() for x in ppn]
 
 user_tokens_removed_Proper_Nouns = [x for x in user_tokens_filtered if x not in ppnString]
-# print("Ppn string: " + str(ppnString))
-# print("Curated sentence: " + str(user_tokens_removed_Proper_Nouns))
 
 keywords = {
     'genre': checkList(user_tokens_filtered,genreName,"Genre"), 
     'production_company': checkProductionCompanies(productionCompaniesName, ppn), 
     'cast': checkCast(castNameSet, ppn), 
-    'release_date': checkList(user_tokens_removed_Proper_Nouns,releaseDateWords,"Release date"), 
+    'release_date': checkReleaseDate(user_text), 
     'original_language': checkList(user_tokens_filtered,languageName,"Language"), 
     'adult': checkList(user_tokens_removed_Proper_Nouns,ageRestrictionWords,"Age restriction"), 
-    'runtime': checkRuntime(user_text_tokenized, runTimeWords, user_text), 
+    'runtime': checkRuntime(user_text), 
     'unclassified': []
     }
 
