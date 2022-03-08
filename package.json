@@ -28,7 +28,8 @@
     "socket.io-client": "^4.2.0",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.16",
     "vue": "^3.0.0",
-    "vue-socket.io": "^3.0.10"
+    "vue-socket.io": "^3.0.10",
+    "vue-spinner": "^1.0.4"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
