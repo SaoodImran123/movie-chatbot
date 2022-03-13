@@ -47,8 +47,6 @@ module.exports = {
     // Query elasticsearch
     elasticSearchQuery(data, client){
         return new Promise(function(resolve, reject){
-            console.log("tokens: " + data.searchTokens.toString());
-
             var filter, must, not, should;
             should = [];
             not = [];

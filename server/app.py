@@ -1,3 +1,10 @@
+#Setting up flask
+#first create a virtual environment and have it install the dependencies in there (nltk, spacy, pickle, difflib, truecase, python-dateutil)
+#then, if the neural network is called "app.py", just type "flask run", otherwise you must set an environment variable for FLASK_APP via set FLASK_APP=filename.py
+#but this seems to not work sometimes, but leaving it named app.py (default flask app name) seems to work
+# pip install Flask
+from flask import Flask,request
+import json
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -8,6 +15,7 @@ import truecase
 import re
 import sys
 from dateutil.parser import parse
+import datetime
 
 # Constants
 categories = ["genre", "production_company", "cast", "release_date", "language", "age_restriction", "runtime"]
@@ -61,23 +69,10 @@ def checkCast(castNameSet, ppn):
         word = str(x.text.strip()).lower()
         for y in castNameSet:
             if word in y:
-                 if word == y and word != "disney":
+                if word == y and word != "disney":
                     cast.append(y)
                     break
     return cast
-    
-def checkCharacters(characterSet, ppn):
-    character = []
-    if len(ppn) < 1: 
-        return []
-
-    for x in ppn:
-        word = str(x.text.strip()).lower()
-        for y in characterSet:
-            if SequenceMatcher(None,word, y).ratio() > 0.9:
-                character.append(y)
-                break
-    return character
 
 def checkRuntime(user_text):
     requestType = ["less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal"]
@@ -122,38 +117,54 @@ def checkRuntime(user_text):
 # if words like old return ["lte", "2005-01-01"] by default
 # if words like new return ["gte", "2015-01-01"]
 def checkReleaseDate(user_text):
-    requestType = ["made in", "released in", "movie from", "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after" "in the past year"]
+    requestType = ["made in", "released in", "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after"]
     type ="eq"
-    passCheck=0
     for z in requestType:
         if z in user_text:
-            passCheck += 1
             if z in ["newer than", "made after","created after"]:
                 type = "gte"
-            elif z in ["older than", "from before", "made before","created before","in the past year"]:
+            elif z in ["older than", "from before", "made before","created before"]:
                 type = "lte"
-    
-    if passCheck > 0:      
-        try:
-            date = parse(user_text,fuzzy=True)
-            today = date.today()
-            if date.month == today.month and date.day == today.day:
-                date = date.replace(month=1, day=1)
-                # TODO: 01 instead of 1
+    try:
+        date = parse(user_text,fuzzy=True)
+        today = date.today()
+        if date.month == today.month and date.day == today.day:
+            date = date.replace(month=1, day=1)
             date = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
-            return [type, date]
-        except ValueError:
-            return []
-    return []
+            date = datetime.datetime.strptime(date, "%Y-%m-%d").strftime("%Y-%m-%d")
+        return [type, date]
+    except ValueError:
+        return []
 
+def calculate(user_text):
+    user_text_tokenized = word_tokenize(user_text.lower())
+    stopwords = nltk.corpus.stopwords.words('english')
+    new_stopwords=('movie', 'movies')
+    stopwords.extend(new_stopwords)
+    true_case = truecase.get_true_case(user_text)
+    user_tokens_filtered = set([word for word in user_text_tokenized if not word in stopwords])
 
+    doc = nlp(true_case)
+    ppn = extract_proper_nouns(doc)
+    ppnString = [x.text.strip().lower() for x in ppn]
+    
+    user_tokens_removed_Proper_Nouns = [x for x in user_tokens_filtered if x not in ppnString]
+    keywords = {
+        'genre': checkList(user_tokens_filtered,genreName,"Genre"), 
+        'production_company': checkProductionCompanies(productionCompaniesName, ppn), 
+        'cast': checkCast(castNameSet, ppn), 
+        'release_date': checkReleaseDate(user_text), 
+        'original_language': checkList(user_tokens_filtered,languageName,"Language"), 
+        'adult': checkList(user_tokens_removed_Proper_Nouns,ageRestrictionWords,"Age restriction"), 
+        'runtime': checkRuntime(user_text), 
+        'unclassified': []
+        }
+    if keywords["genre"] == [] and keywords["production_company"] == [] and keywords["cast"] == [] and keywords["release_date"] == [] and keywords["original_language"] == [] and keywords["adult"] == [] and keywords["runtime"] == []:
+        keywords["unclassified"] = "None"
+    return(keywords)
 with open(r"server/cast.txt", "rb") as f:
     castName = pickle.load(f)
 castNameSet = set(castName)
-
-with open(r"server/castCharacters.txt", "rb") as f:
-    castName = pickle.load(f)
-castCharactersSet = set(castName)
 
 with open(r"server/production_companies.txt", "rb") as f:
     productionCompaniesName = pickle.load(f)
@@ -163,38 +174,31 @@ with open(r"server/genres.txt", "rb") as f:
     genreName = pickle.load(f)
 genreName = set(genreName)
 
+with open(r"server/runTimeWords.txt", "rb") as f:
+    runTimeWords = pickle.load(f)
+runTimeWords = set(runTimeWords)
+
 with open(r"server/ageRestrictionWords.txt", "rb") as f:
     ageRestrictionWords = pickle.load(f)
 ageRestrictionWords = set(ageRestrictionWords)
+
+with open(r"server/releaseDateWords.txt", "rb") as f:
+    releaseDateWords = pickle.load(f)
+releaseDateWords = set(releaseDateWords)
 
 with open(r"server/languages.txt", "rb") as f:
     languageName = pickle.load(f)
 languages = set(languageName)
 
-user_text = sys.argv[1]
-user_text_tokenized = word_tokenize(user_text.lower())
-stopwords = nltk.corpus.stopwords.words('english')
-new_stopwords=('movie', 'movies')
-stopwords.extend(new_stopwords)
-true_case = truecase.get_true_case(user_text)
-user_tokens_filtered = set([word for word in user_text_tokenized if not word in stopwords])
 
-doc = nlp(true_case)
-ppn = extract_proper_nouns(doc)
-ppnString = [x.text.strip().lower() for x in ppn]
+app = Flask(__name__)
+@app.route("/result", methods=["POST","GET"])
+def result():
+    output=request.get_json()
+    user_text = output["sentence"]
+    results = calculate(user_text)
 
-user_tokens_removed_Proper_Nouns = [x for x in user_tokens_filtered if x not in ppnString]
+    return (results)
 
-keywords = {
-    'genre': checkList(user_tokens_filtered,genreName,"Genre"), 
-    'production_company': checkProductionCompanies(productionCompaniesName, ppn), 
-    'cast': checkCast(castNameSet, ppn), 
-    'release_date': checkReleaseDate(user_text), 
-    'original_language': checkList(user_tokens_filtered,languageName,"Language"), 
-    'adult': checkList(user_tokens_removed_Proper_Nouns,ageRestrictionWords,"Age restriction"), 
-    'runtime': checkRuntime(user_text), 
-    'character': checkCharacters(castCharactersSet, ppn),
-    'unclassified': []
-    }
-
-print(keywords)
+if __name__ == "__main__":
+    app.run(debug=False)

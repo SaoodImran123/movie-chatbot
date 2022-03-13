@@ -4,6 +4,7 @@ const msgProcessor = require("./msg_processor")
 const elastic = require("./elastic")
 const routes = require("./api/routes")
 var port = 3050;
+const request = require('request');
 
 const app = express();
 app.use(cors({
@@ -78,10 +79,13 @@ io.on('connection', function(socket) {
       return new Promise(async function(resolve, reject){
 
         //searchTokens is a json string e.g. {"genre":["action","comedy"]} //searchTokens.genre[0]
-        msgProcessor.sentenceClassify(data.message).then(searchTokensStr => {
+        const request = require('request');
+
+        request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":data.message} }, (err, res, searchTokens) => {
+          if (err) { return console.log(err); }
           console.log("Search tokens: ");
-          console.log(searchTokensStr);
-          let searchTokens = JSON.parse(searchTokensStr);
+          console.log(searchTokens);
+          console.log("done");
 
           // Append searchTokens to previous searchTokens
           data = combineArray(data, searchTokens);
@@ -95,8 +99,8 @@ io.on('connection', function(socket) {
               showESResult(result);
             },
             error=>console.log(error)
-        )
-        })
+          )
+        });
        
         // else if(requirements.release_date.length == 0){
         //   data.bot_message = "Do you have any preference on how old the movie is?";
