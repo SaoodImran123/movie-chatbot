@@ -176,7 +176,7 @@ def classify(user_text):
         'original_language': checkList(user_tokens_filtered,languageName,"Language"), 
         'adult': checkList(user_tokens_removed_Proper_Nouns,ageRestrictionWords,"Age restriction"), 
         'runtime': checkRuntime(user_text), 
-        #'character': checkCharacters(castCharactersSet, ppn),
+        'character': checkCharacters(castCharactersSet, ppn),
         'unclassified': ""
         }
 

@@ -9,7 +9,7 @@ collectionMovieCredits = moviezenDB.get_collection('TMDB_Movies_Credits')
 
 print(collectionTMDB_Production_Companies)
 
-peopleData = collectionPeople.find({"popularity": { "$gte": "10" } , "known_for_department": "Acting"})
+peopleData = collectionPeople.find({"popularity": { "$gte": 10 } , "known_for_department": "Acting"})
 castName = []
 for x in peopleData:
     if x["known_for_department"] == "Acting" and x["popularity"] >= 10:
@@ -26,7 +26,7 @@ productionCompaniesName = list(set(productionCompaniesName) - set(castName))
 print("Finished production companies")
 
 castCharacters = []
-movieData = collectionMovieCredits.find({})
+movieData = collectionMovieCredits.find({"cast.known_for_department": "Acting"})
 for x in movieData:
     for y in x["cast"]:
         if y["character"]:
@@ -55,10 +55,10 @@ languageName = {"af": "afrikaans", "sq": "albanian", "am": "amharic", "ar": "ara
 for key, value in languageName.items():
     languages.append(value)
 
-with  open("language.txt", "wb") as f:
+with  open("languages.txt", "wb") as f:
     pickle.dump(languages,f)
 
-with  open("genre.txt", "wb") as f:
+with  open("genres.txt", "wb") as f:
     pickle.dump(genreName,f)
 
 with  open("cast.txt", "wb") as f:
