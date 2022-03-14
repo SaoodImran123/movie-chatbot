@@ -86,7 +86,6 @@ export default {
             time: '',
             createdTime: '',
             socket : io('ws://'+window.location.hostname+':3050'),
-            ids: [],
             searchTokens: {genre: [], production_company: [], cast:[], release_date: [], original_language: [], adult: [], runtime:[], unclassified: []},
             requirements: [],
             loading:false
@@ -99,7 +98,6 @@ export default {
             this.socket.emit('SEND_MESSAGE', {
                 message: msg || this.message,
                 time: this.time,
-                ids: this.ids,
                 searchTokens: this.searchTokens,
                 requirements: this.requirements
             });
@@ -118,13 +116,15 @@ export default {
         this.socket.on('MESSAGE', (data) => {
             console.log(data);
             this.messages = [...this.messages, data];
-            this.ids = data.ids;
             this.searchTokens = data.searchTokens;
             this.requirements = data.requirements;
             this.message = "";
 
             // Send data to Home Page
-            this.$emit('send-recommendations', data.response);
+            console.log("here")
+            if(data.response.length > 0){
+                this.$emit('send-recommendations', data.response);
+            }
             this.loading = false;
         });
     },

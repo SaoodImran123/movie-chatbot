@@ -129,45 +129,51 @@ io.on('connection', function(socket) {
 
 function showESResult(result){
   try {
-    // Only display top 5 recommendation
-    result.response = result.response.slice(0, 5);
+    // Check if Elasticsearch returns a response
+    if(result.response.lenght >0){
+      // Only display top 5 recommendation
+      result.response = result.response.slice(0, 5);
 
-    // Create final string when all requirements are fulfilled
-    let isTrue = result.requirements.every(function (e) {
-      return e == true;
-    });
+      // Create final string when all requirements are fulfilled
+      let isTrue = result.requirements.every(function (e) {
+        return e == true;
+      });
 
-    if(isTrue){
-      result.bot_message =  "I recommend "; 
-      for(var i =0; i < result.response.length; i++){
-        if(i < result.response.length -1){
-          result.bot_message += result.response[i]._source.title + ", ";
-        }else{
-          result.bot_message += "and " + result.response[i]._source.title;
+      if(isTrue){
+        result.bot_message =  "I recommend "; 
+        for(var i =0; i < result.response.length; i++){
+          if(i < result.response.length -1){
+            result.bot_message += result.response[i]._source.title + ", ";
+          }else{
+            result.bot_message += "and " + result.response[i]._source.title;
+          }
+        }
+      }else{
+        let findMissingReqIndex = (element) => element == false;
+        let reqIndex = result.requirements.findIndex(findMissingReqIndex);
+
+        // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
+        if (REQUIREMENTS[reqIndex] == "genre"){
+          result.bot_message = "What genre do you prefer?";
+          result.guided_ans = ["I want action movies", "I want comedy movies", "I want romance movies"];
+        }else if(REQUIREMENTS[reqIndex] == "production_company"){
+
+        }else if(REQUIREMENTS[reqIndex] == "cast"){
+          
+        }else if(REQUIREMENTS[reqIndex] == "release_date"){
+          result.bot_message = "Do you have any preference on how old the movie is?";
+          result.guided_ans = ["I want movies released in the past year", "I want movies released in the last 10 years", "I don't have a preference"];
+        }else if(REQUIREMENTS[reqIndex] == "original_language"){
+          
+        }else if(REQUIREMENTS[reqIndex] == "adult"){
+          
+        }else if(REQUIREMENTS[reqIndex] == "runtime"){
+          
         }
       }
     }else{
-      let findMissingReqIndex = (element) => element == false;
-      let reqIndex = result.requirements.findIndex(findMissingReqIndex);
-
-      // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
-      if (REQUIREMENTS[reqIndex] == "genre"){
-        result.bot_message = "What genre do you prefer?";
-        result.guided_ans = ["I want action movies", "I want comedy movies", "I want romance movies"];
-      }else if(REQUIREMENTS[reqIndex] == "production_company"){
-
-      }else if(REQUIREMENTS[reqIndex] == "cast"){
-        
-      }else if(REQUIREMENTS[reqIndex] == "release_date"){
-        result.bot_message = "Do you have any preference on how old the movie is?";
-        result.guided_ans = ["I want movies released in the past year", "I want movies released in the last 10 years", "I don't have a preference"];
-      }else if(REQUIREMENTS[reqIndex] == "original_language"){
-        
-      }else if(REQUIREMENTS[reqIndex] == "adult"){
-        
-      }else if(REQUIREMENTS[reqIndex] == "runtime"){
-        
-      }
+      result.bot_message =  "I can't find a movie with that search"; 
+      result.guided_ans = ["test", "test", "test"];
     }
 
     console.log(result);
