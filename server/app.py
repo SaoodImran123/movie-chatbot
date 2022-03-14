@@ -58,7 +58,7 @@ def checkProductionCompanies(productionCompaniesName, ppn):
             word = str(x.text.strip()).lower()
             for y in productionCompaniesName:
                 if word in y:
-                    if SequenceMatcher(None, word, y).ratio() > 0.6 and word != "tom hanks":
+                    if SequenceMatcher(None, word, y).ratio() > 0.6 and (word != "tom hanks"  and word != "tom hank"):
                         companies.append(y)
                         break
     return companies
@@ -76,6 +76,19 @@ def checkCast(castNameSet, ppn):
                     cast.append(y)
                     break
     return cast
+
+def checkCharacters(characterSet, ppn):
+    character = []
+    if len(ppn) < 1: 
+        return []
+
+    for x in ppn:
+        word = str(x.text.strip()).lower()
+        for y in characterSet:
+            if SequenceMatcher(None,word, y).ratio() > 0.9:
+                character.append(y)
+                break
+    return character
 
 def checkRuntime(user_text):
     requestType = ["less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal"]
@@ -163,6 +176,7 @@ def classify(user_text):
         'original_language': checkList(user_tokens_filtered,languageName,"Language"), 
         'adult': checkList(user_tokens_removed_Proper_Nouns,ageRestrictionWords,"Age restriction"), 
         'runtime': checkRuntime(user_text), 
+        #'character': checkCharacters(castCharactersSet, ppn),
         'unclassified': ""
         }
 
@@ -197,6 +211,10 @@ def classify(user_text):
 with open(r"server/cast.txt", "rb") as f:
     castName = pickle.load(f)
 castNameSet = set(castName)
+
+with open(r"server/castCharacters.txt", "rb") as f:
+    castName = pickle.load(f)
+castCharactersSet = set(castName)
 
 with open(r"server/production_companies.txt", "rb") as f:
     productionCompaniesName = pickle.load(f)

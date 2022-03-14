@@ -149,7 +149,6 @@ function showESResult(result){
     }else{
       let findMissingReqIndex = (element) => element == false;
       let reqIndex = result.requirements.findIndex(findMissingReqIndex);
-      REQUIREMENTS
 
       // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
       if (REQUIREMENTS[reqIndex] == "genre"){
@@ -172,6 +171,9 @@ function showESResult(result){
     }
 
     console.log(result);
+
+    // remove message from result to avoid duplicate messages
+    delete result.message;
 
     // Send back to frontend
     io.emit('MESSAGE', result);

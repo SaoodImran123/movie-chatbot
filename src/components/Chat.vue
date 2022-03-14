@@ -105,7 +105,6 @@ export default {
             });
             var data ={message: msg || this.message, time: this.time};
             this.messages.push(data);
-            console.log(this.messages);
             // Clears input box
             this.message = ''
             this.loading = true;
