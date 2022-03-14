@@ -202,7 +202,7 @@ function showESResult(result){
           result.searchTokens.unclassified =  result.searchTokens.unclassified == "" ?  result.searchTokens.unclassified : result.searchTokens.unclassified.replace(searchTokens.unclassified, "");
           console.log("After removal")
           console.log(result)
-          result.bot_message =  ["Sorry I can't understand you. Try one of these options", "Sorry I don't understand. Try one of these options"]; 
+          result.bot_message =  ["Sorry! I can't understand you. Try one of these options", "Sorry! I don't understand. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
           result.guided_ans = ["I want action movies", "I would like a movie longer than 2 hours", "I want a Pixar movie"];
 
           result.bot_message = result.bot_message[Math.floor(Math.random()*result.bot_message.length)];

@@ -230,12 +230,25 @@ module.exports = {
                 console.log("ES: ")
                 console.log(resp.hits.hits);
                 console.log(data.response);
-                
+
+                old_id = []
+                new_id = []
+
                 // Check if response doesn't change
-                if(data.response && JSON.stringify(data.response) === JSON.stringify(resp.hits.hits)){
-                    data.noResult = true;
-                    console.log("equal result");
+                for (let i = 0; i < data.response.length; i++){
+                    old_id.push(data.response[i]._id)
                 }
+                for (let i = 0; i < resp.hits.hits.length; i++){
+                    new_id.push(resp.hits.hits[i]._id)
+                }
+                const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+                if(data.response && equals(old_id,new_id)){
+                    data.noResult = true;
+                }
+                console.log("equal result");
+                console.log(old_id.toString());
+                console.log(new_id.toString());
+                console.log(data.noResult);
 
                 //resturns an array of movie hits
                 data.response = resp.hits.hits;

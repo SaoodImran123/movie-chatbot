@@ -54,6 +54,8 @@
 <script>
 import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import io from 'socket.io-client';
+const API_URL = "http://"+window.location.hostname+":3050/";
+
 function getCurrentTime(){
     const today = new Date();
     var mins = today.getMinutes();
@@ -113,6 +115,13 @@ export default {
     created() {
         this.createdTime = getCurrentTime();
         this.createdDate = getCurrentDate();
+        fetch(API_URL+'movies-default')
+        .then(response => {
+            return(response.json())
+        })
+        .then(result => {
+            this.response = result
+        });
     },
     mounted() {
         this.socket.on('MESSAGE', (data) => {
