@@ -34,6 +34,10 @@
                             </div>
                         </div>
                     </div>
+                    <div class="media media-chat" v-if="loading">
+                        <img class="avatar" src="https://img.icons8.com/color/36/000000/administrator-male.png" alt="...">
+                        <pulse-loader :loading="loading" :color="color" :size="size"></pulse-loader>
+                    </div>
                 </div>
                 <div class="publisher"> 
                     <form @submit.prevent="sendMessage">
@@ -48,6 +52,7 @@
 </template>
 
 <script>
+import PulseLoader from 'vue-spinner/src/PulseLoader.vue'
 import io from 'socket.io-client';
 function getCurrentTime(){
     const today = new Date();
@@ -71,6 +76,9 @@ function getCurrentDate(){
     return date;
 }
 export default {
+    components:{
+        PulseLoader
+    },
     data() {
         return {
             message: '',
@@ -78,9 +86,10 @@ export default {
             time: '',
             createdTime: '',
             socket : io('ws://'+window.location.hostname+':3050'),
-            ids: [],
-            tokens: '',
-            requirements: {genre: [], release_date: [], occassion:[], mood: []}
+            searchTokens: {genre: [], production_company: [], cast:[], release_date: [], original_language: [], adult: [], runtime:[], unclassified: []},
+            response: [],
+            requirements: [],
+            loading:false
         }
     },
     methods: {
@@ -90,15 +99,15 @@ export default {
             this.socket.emit('SEND_MESSAGE', {
                 message: msg || this.message,
                 time: this.time,
-                ids: this.ids,
-                tokens: this.tokens,
-                requirements: this.requirements
+                searchTokens: this.searchTokens,
+                requirements: this.requirements,
+                response: this.response
             });
             var data ={message: msg || this.message, time: this.time};
             this.messages.push(data);
-            console.log(this.messages);
             // Clears input box
             this.message = ''
+            this.loading = true;
         }
     },
     created() {
@@ -109,13 +118,16 @@ export default {
         this.socket.on('MESSAGE', (data) => {
             console.log(data);
             this.messages = [...this.messages, data];
-            this.ids = data.ids;
-            this.tokens = data.tokens;
+            this.searchTokens = data.searchTokens;
             this.requirements = data.requirements;
-            this.message = "";
+            this.response = data.response;
 
             // Send data to Home Page
-            this.$emit('send-recommendations', data.response);
+            console.log("here")
+            if(data.response.length > 0){
+                this.$emit('send-recommendations', data.response);
+            }
+            this.loading = false;
         });
     },
     updated(){
@@ -180,7 +192,7 @@ h4.card-title {
 
 #chat-content{
     overflow: scroll;
-    height:400px;
+    height:80vh;
     background-color: #851E3E;
 }
 

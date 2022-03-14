@@ -6,8 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "sc-serve": "concurrently --kill-others \"node server/app.js\" \"npm run serve\"",
-    "prod-serve": "concurrently --kill-others \"node server/app.js\" \"vue-cli-service serve --mode production\""
+    "sc-serve": "concurrently --kill-others \"py server/app.py\" \"node server/app.js\" \"npm run serve\"",
+    "prod-serve": "concurrently --kill-others \"py server/app.py\" \"node server/app.js\" \"vue-cli-service serve --mode production\""
   },
   "dependencies": {
     "@elastic/elasticsearch": "^7.15.0",
@@ -24,11 +24,13 @@
     "mongoose": "^6.0.12",
     "postcss": "^7.0.39",
     "python-shell": "^3.0.0",
+    "request": "^2.88.2",
     "socket.io": "^4.2.0",
     "socket.io-client": "^4.2.0",
     "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.2.16",
     "vue": "^3.0.0",
-    "vue-socket.io": "^3.0.10"
+    "vue-socket.io": "^3.0.10",
+    "vue-spinner": "^1.0.4"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "~4.5.0",
