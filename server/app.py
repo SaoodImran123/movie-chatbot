@@ -3,13 +3,12 @@
 #then, if the neural network is called "app.py", just type "flask run", otherwise you must set an environment variable for FLASK_APP via set FLASK_APP=filename.py
 #but this seems to not work sometimes, but leaving it named app.py (default flask app name) seems to work
 # pip install Flask
-# pip install git+https://github.com/casics/nostril.git
 from flask import Flask,request
 import nltk
 from nltk.corpus import stopwords
+from nltk.corpus import words
 from nltk.tokenize import word_tokenize
 from rake_nltk import Rake
-from nostril import nonsense
 import spacy
 import pickle
 from difflib import SequenceMatcher
@@ -52,15 +51,21 @@ def checkList(user_tokens,List, type):
     return arr
 
 def checkProductionCompanies(productionCompaniesName, ppn):
+    score = 0
     companies = []
     if len(ppn) > 0:
         for x in ppn:
             word = str(x.text.strip()).lower()
             for y in productionCompaniesName:
                 if word in y:
-                    if SequenceMatcher(None, word, y).ratio() > 0.6 and (word != "tom hanks"  and word != "tom hank"):
-                        companies.append(y)
-                        break
+                    if SequenceMatcher(None, word, y).ratio() > 0.6 :
+                         if score < SequenceMatcher(None,word, y).ratio():
+                            if score > 0:
+                                companies[0] = y
+                            else:
+                                companies.append(y)
+                            score = SequenceMatcher(None,word, y).ratio()
+                        
     return companies
 
 def checkCast(castNameSet, ppn):
@@ -78,6 +83,7 @@ def checkCast(castNameSet, ppn):
     return cast
 
 def checkCharacters(characterSet, ppn):
+    score = 0
     character = []
     if len(ppn) < 1: 
         return []
@@ -86,8 +92,13 @@ def checkCharacters(characterSet, ppn):
         word = str(x.text.strip()).lower()
         for y in characterSet:
             if SequenceMatcher(None,word, y).ratio() > 0.9:
-                character.append(y)
-                break
+                if score < SequenceMatcher(None,word, y).ratio():
+                    if score > 0:
+                        character[0] = y
+                    else:
+                        character.append(y)
+                    score = SequenceMatcher(None,word, y).ratio()
+                
     return character
 
 def checkRuntime(user_text):
@@ -213,7 +224,7 @@ def classify(user_text):
         }
 
     # When sentence is unclassified, extract keywords from the sentence
-    if len(keywords["genre"]) == 0 and len(keywords["production_company"]) == 0 and len(keywords["cast"] ) == 0 and len(keywords["release_date"]) == 0 and len(keywords["original_language"]) == 0 and len(keywords["adult"]) == 0 and len(keywords["runtime"]) == 0:
+    if len(keywords["genre"]) == 0 and len(keywords["production_company"]) == 0 and len(keywords["cast"] ) == 0 and len(keywords["release_date"]) == 0 and len(keywords["original_language"]) == 0 and len(keywords["adult"]) == 0 and len(keywords["runtime"]) == 0 and len(keywords["character"] ) == 0:
         stopwords = nltk.corpus.stopwords.words('english')
         # stopwords.remove("don")
         # stopwords.remove("don't")
@@ -231,10 +242,8 @@ def classify(user_text):
         result = r.get_ranked_phrases()
         filtered_result = []
         for token in result:
-            # nonsense is limited to only check strings with 6 letters
-            if len(token) < 6:
-                filtered_result.append(token)
-            elif not nonsense(token):
+            # check for nonsense
+            if token in words.words():
                 filtered_result.append(token)
         
         keywords["unclassified"] = ' '.join(filtered_result)
@@ -252,7 +261,7 @@ with open(r"server/production_companies.txt", "rb") as f:
     productionCompaniesName = pickle.load(f)
 productionNameSet = set(productionCompaniesName)
 
-with open(r"server/genre.txt", "rb") as f:
+with open(r"server/genres.txt", "rb") as f:
     genreName = pickle.load(f)
 genreName = set(genreName)
 
@@ -268,7 +277,7 @@ with open(r"server/releaseDateWords.txt", "rb") as f:
     releaseDateWords = pickle.load(f)
 releaseDateWords = set(releaseDateWords)
 
-with open(r"server/language.txt", "rb") as f:
+with open(r"server/languages.txt", "rb") as f:
     languageName = pickle.load(f)
 languages = set(languageName)
 
