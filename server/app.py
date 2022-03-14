@@ -4,6 +4,15 @@
 #but this seems to not work sometimes, but leaving it named app.py (default flask app name) seems to work
 # pip install Flask
 # pip install git+https://github.com/casics/nostril.git
+# pip install spacy
+# pip install truecase
+# pip install -U pip setuptools wheel
+# python -m spacy download en_core_web_trf
+# >run Data.py
+# pip install pymongo
+# cd server
+# python Data.py
+
 from flask import Flask,request
 import json
 import nltk
