@@ -230,8 +230,9 @@ module.exports = {
                 console.log("ES: ")
                 console.log(resp.hits.hits);
                 console.log(data.response);
-                // Need to detect previous 
-                if(data.response && _.isEqual(data.response, resp.hits.hits)){
+                
+                // Check if response doesn't change
+                if(data.response && JSON.stringify(data.response) === JSON.stringify(resp.hits.hits)){
                     data.noResult = true;
                     console.log("equal result");
                 }

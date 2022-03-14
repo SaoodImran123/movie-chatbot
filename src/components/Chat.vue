@@ -87,6 +87,7 @@ export default {
             createdTime: '',
             socket : io('ws://'+window.location.hostname+':3050'),
             searchTokens: {genre: [], production_company: [], cast:[], release_date: [], original_language: [], adult: [], runtime:[], unclassified: []},
+            response: [],
             requirements: [],
             loading:false
         }
@@ -99,7 +100,8 @@ export default {
                 message: msg || this.message,
                 time: this.time,
                 searchTokens: this.searchTokens,
-                requirements: this.requirements
+                requirements: this.requirements,
+                response: this.response
             });
             var data ={message: msg || this.message, time: this.time};
             this.messages.push(data);
@@ -118,7 +120,7 @@ export default {
             this.messages = [...this.messages, data];
             this.searchTokens = data.searchTokens;
             this.requirements = data.requirements;
-            this.message = "";
+            this.response = data.response;
 
             // Send data to Home Page
             console.log("here")

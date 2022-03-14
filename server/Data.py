@@ -7,10 +7,12 @@ collectionPeople = moviezenDB.get_collection('TMDB_People')
 collectionTMDB_Production_Companies = moviezenDB.get_collection('TMDB_Production_Companies')
 collectionMovieCredits = moviezenDB.get_collection('TMDB_Movies_Credits')
 
-peopleData = collectionPeople.find({})
+print(collectionTMDB_Production_Companies)
+
+peopleData = collectionPeople.find({"popularity": { "$gte": "10" } , "known_for_department": "Acting"})
 castName = []
 for x in peopleData:
-    if x["name"].lower() != "batman":
+    if x["known_for_department"] == "Acting" and x["popularity"] >= 10:
         castName.append(x["name"].lower())
 
 print("Finished cast")

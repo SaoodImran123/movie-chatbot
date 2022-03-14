@@ -130,7 +130,7 @@ io.on('connection', function(socket) {
 function showESResult(result){
   try {
     // Check if Elasticsearch returns a response
-    if(result.response.length >0 && data.noResult !== true){
+    if(result.response.length >0 && result.noResult !== true){
       // Only display top 5 recommendation
       result.response = result.response.slice(0, 5);
 
@@ -190,7 +190,7 @@ function showESResult(result){
           result.searchTokens.original_language = result.searchTokens.original_language.filter(item => !searchTokens.original_language.includes(item))
           result.searchTokens.adult = result.searchTokens.adult.filter(item => !searchTokens.adult.includes(item))
           result.searchTokens.runtime = result.searchTokens.runtime.filter(item => !searchTokens.runtime.includes(item))
-          result.searchTokens.unclassified = result.searchTokens.unclassified.replace(searchTokens.unclassified, "");
+          result.searchTokens.unclassified =  result.searchTokens.unclassified == "" ?  result.searchTokens.unclassified : result.searchTokens.unclassified.replace(searchTokens.unclassified, "");
           console.log("After removal")
           console.log(result)
           result.bot_message =  "I can't find a movie with that search"; 
