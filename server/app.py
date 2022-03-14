@@ -181,7 +181,7 @@ def classify(user_text):
         }
 
     # When sentence is unclassified, extract keywords from the sentence
-    if keywords["genre"] == [] and keywords["production_company"] == [] and keywords["cast"] == [] and keywords["release_date"] == [] and keywords["original_language"] == [] and keywords["adult"] == [] and keywords["runtime"] == []:
+    if len(keywords["genre"]) == 0 and len(keywords["production_company"]) == 0 and len(keywords["cast"] ) == 0 and len(keywords["release_date"]) == 0 and len(keywords["original_language"]) == 0 and len(keywords["adult"]) == 0 and len(keywords["runtime"]) == 0:
         stopwords = nltk.corpus.stopwords.words('english')
         # stopwords.remove("don")
         # stopwords.remove("don't")
@@ -204,7 +204,7 @@ def classify(user_text):
                 filtered_result.append(token)
             elif not nonsense(token):
                 filtered_result.append(token)
-
+        
         keywords["unclassified"] = ' '.join(filtered_result)
     return(keywords)
 

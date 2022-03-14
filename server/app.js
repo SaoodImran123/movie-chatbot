@@ -35,6 +35,7 @@ var client = new elasticsearch.Client({
 // PYTHON SCRIPT
 let {PythonShell} = require('python-shell');
 const { response } = require('express');
+const { data } = require('autoprefixer');
 
 // Convert strings to tokens and get keywords
 function runPy(sentence){
@@ -85,7 +86,6 @@ io.on('connection', function(socket) {
           if (err) { return console.log(err); }
           console.log("Search tokens: ");
           console.log(searchTokens);
-          console.log("done");
 
           // Append searchTokens to previous searchTokens
           data = combineArray(data, searchTokens);
@@ -130,7 +130,7 @@ io.on('connection', function(socket) {
 function showESResult(result){
   try {
     // Check if Elasticsearch returns a response
-    if(result.response.lenght >0){
+    if(result.response.length >0 && data.noResult !== true){
       // Only display top 5 recommendation
       result.response = result.response.slice(0, 5);
 
@@ -170,19 +170,40 @@ function showESResult(result){
         }else if(REQUIREMENTS[reqIndex] == "runtime"){
           
         }
+
+
+        // remove message from result to avoid duplicate messages
+        delete result.message;
+        
+        console.log(result)
+        // Send back to frontend
+        io.emit('MESSAGE', result);
       }
     }else{
-      result.bot_message =  "I can't find a movie with that search"; 
-      result.guided_ans = ["test", "test", "test"];
+      request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":result.message} }, (err, res, searchTokens) => {
+          if (err) { return console.log(err); }
+          // Remove token from 
+          result.searchTokens.genre = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
+          result.searchTokens.production_company = result.searchTokens.production_company.filter(item => !searchTokens.production_company.includes(item))
+          result.searchTokens.cast = result.searchTokens.cast.filter(item => !searchTokens.cast.includes(item))
+          result.searchTokens.release_date = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
+          result.searchTokens.original_language = result.searchTokens.original_language.filter(item => !searchTokens.original_language.includes(item))
+          result.searchTokens.adult = result.searchTokens.adult.filter(item => !searchTokens.adult.includes(item))
+          result.searchTokens.runtime = result.searchTokens.runtime.filter(item => !searchTokens.runtime.includes(item))
+          result.searchTokens.unclassified = result.searchTokens.unclassified.replace(searchTokens.unclassified, "");
+          console.log("After removal")
+          console.log(result)
+          result.bot_message =  "I can't find a movie with that search"; 
+          result.guided_ans = ["test", "test", "test"];
+
+          // remove message from result to avoid duplicate messages
+          delete result.message;
+
+          console.log(result)
+          // Send back to frontend
+          io.emit('MESSAGE', result);
+        });
     }
-
-    console.log(result);
-
-    // remove message from result to avoid duplicate messages
-    delete result.message;
-
-    // Send back to frontend
-    io.emit('MESSAGE', result);
   } catch (error) {
     console.log(error);
   }
@@ -211,7 +232,7 @@ function combineArray(data, newSearchTokens){
   data.searchTokens.original_language = [...new Set([...data.searchTokens.original_language, ...newSearchTokens.original_language])];
   data.searchTokens.adult = [...new Set([...data.searchTokens.adult, ...newSearchTokens.adult])];
   data.searchTokens.runtime = [...new Set([...data.searchTokens.runtime, ...newSearchTokens.runtime])];
-  data.searchTokens.unclassified = data.searchTokens.unclassified + " " + newSearchTokens.unclassified;
+  data.searchTokens.unclassified = newSearchTokens.unclassified == "" ? data.searchTokens.unclassified : data.searchTokens.unclassified + " " + newSearchTokens.unclassified;
   return data;
 }
 

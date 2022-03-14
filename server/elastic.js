@@ -1,3 +1,4 @@
+const e = require("express");
 
 
 module.exports = {
@@ -69,17 +70,21 @@ module.exports = {
 
             
             // Perform a multi_match when a token is unclassified
-            if(data.searchTokens.unclassified.length > 0){
-                should.push( {
-                    "multi_match": {
-                        "query": data.searchTokens.unclassified.toString(),
-                        "fields": [
-                            "cast.character",
-                            "title",
-                            "overview"
-                        ]
-                    }
-                });
+            if(data.searchTokens.unclassified != ""){
+                if(should["multi_match"]){
+                    should["multi_match"]["query"] = data.searchTokens.unclassified.toString()
+                }else{
+                    should.push( {
+                        "multi_match": {
+                            "query": data.searchTokens.unclassified.toString(),
+                            "fields": [
+                                "cast.character",
+                                "title",
+                                "overview"
+                            ]
+                        }
+                    });
+                }
             }
 
             // Search for genre
@@ -223,7 +228,14 @@ module.exports = {
             console.log(JSON.stringify(query));
             client.search(query).then(function(resp) {
                 console.log("ES: ")
-                console.log(resp);
+                console.log(resp.hits.hits);
+                console.log(data.response);
+                // Need to detect previous 
+                if(data.response && _.isEqual(data.response, resp.hits.hits)){
+                    data.noResult = true;
+                    console.log("equal result");
+                }
+
                 //resturns an array of movie hits
                 data.response = resp.hits.hits;
                 resolve(data);
