@@ -14,7 +14,6 @@
 # python Data.py
 
 from flask import Flask,request
-import json
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -25,8 +24,9 @@ import pickle
 from difflib import SequenceMatcher
 import truecase
 import re
-import sys
+from datetime import datetime
 from dateutil.parser import parse
+from dateutil.relativedelta import relativedelta
 import datetime
 
 # Constants
@@ -142,24 +142,56 @@ def checkRuntime(user_text):
 # if words like old return ["lte", "2005-01-01"] by default
 # if words like new return ["gte", "2015-01-01"]
 def checkReleaseDate(user_text):
-    requestType = ["made in", "released in", "released after", "released before" "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after"]
+    requestType = ["made in", "released in", "released later" "released after", "released before" "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "past", "created after"]
     type ="eq"
+    yr = 0
+    mn = 0
+    dy = 0
     # Check if string contains  the substring from the requestType
     if not any(ele in user_text for ele in requestType):
         return []
     for z in requestType:
         if z in user_text:
-            if z in ["newer than", "made after","created after"]:
+            if z in ["newer than", "made after","created after", "released later", "past"]:
                 type = "gte"
             elif z in ["older than", "from before", "made before","created before"]:
                 type = "lte"
+
     try:
+        if "past" in user_text:
+            singleYear = re.findall("past+\syear",user_text)
+            pastYear = re.findall("past+\s+\d+\syears?|past+\s+\d+years?",user_text)
+            pastMonth = re.findall("past+\s+\d+\smonths?|past+\s+\d+months?",user_text)
+            pastDays = re.findall("past+\s+\d+\sdays?|past+\s+\d+days?",user_text)
+            yearsAndMonths = re.findall("past+\s+\d+years?\sand+\s+\d+month|past+\s+\d+\syears?\sand+\s+\d+\smonths?",user_text)
+            if singleYear:
+                yr = 1
+            if pastYear:
+                yearsAmount = re.findall("[-+]?(?:\d*\.\d+|\d+)",pastYear[0])
+                yr = int(yearsAmount[0])
+            if pastMonth:
+                monthsAmount = re.findall("[-+]?(?:\d*\.\d+|\d+)",pastMonth[0])
+                mn = int(monthsAmount[0])
+            if pastDays:
+                daysAmount = re.findall("[-+]?(?:\d*\.\d+|\d+)",pastDays[0])
+                dy = int(daysAmount[0])
+            if yearsAndMonths:
+                yearsAndMonths = re.findall("[-+]?(?:\d*\.\d+|\d+)",yearsAndMonths[0])
+                yr = 0
+                mn = int(yearsAndMonths[0]) * 12 + int(yearsAndMonths[1])
         date = parse(user_text,fuzzy=True)
         today = date.today()
+        if yr > 0 or mn > 0 or dy > 0:
+            requestedTimeFrame = today - relativedelta(years=yr)
+            requestedTimeFrame = requestedTimeFrame - relativedelta(months=mn)
+            requestedTimeFrame = requestedTimeFrame - relativedelta(days=dy)
+            requestedTimeFrame = str(requestedTimeFrame.year) + "-" + str(requestedTimeFrame.month) + "-" + str(requestedTimeFrame.day)
+            return[type,requestedTimeFrame]
         if date.month == today.month and date.day == today.day:
             date = date.replace(month=1, day=1)
             date = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
             date = datetime.datetime.strptime(date, "%Y-%m-%d").strftime("%Y-%m-%d")
+        
         return [type, date]
     except ValueError:
         return []
@@ -229,7 +261,7 @@ with open(r"server/production_companies.txt", "rb") as f:
     productionCompaniesName = pickle.load(f)
 productionNameSet = set(productionCompaniesName)
 
-with open(r"server/genres.txt", "rb") as f:
+with open(r"server/genre.txt", "rb") as f:
     genreName = pickle.load(f)
 genreName = set(genreName)
 
@@ -245,7 +277,7 @@ with open(r"server/releaseDateWords.txt", "rb") as f:
     releaseDateWords = pickle.load(f)
 releaseDateWords = set(releaseDateWords)
 
-with open(r"server/languages.txt", "rb") as f:
+with open(r"server/language.txt", "rb") as f:
     languageName = pickle.load(f)
 languages = set(languageName)
 
