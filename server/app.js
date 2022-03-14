@@ -96,30 +96,12 @@ io.on('connection', function(socket) {
           //Perform search on given user sentence
           elastic.elasticSearchQuery(data, client).then(
             result => {
-              showESResult(result);
+              showESResult(result, socket);
             },
             error=>console.log(error)
           )
         });
        
-        // else if(requirements.release_date.length == 0){
-        //   data.bot_message = "Do you have any preference on how old the movie is?";
-        //   data.guided_ans = ["I want movies released in the past year", "I want movies released in the last 10 years", "I don't have a preference"];
-        // }
-        // else if(requirements.occassion.length == 0){
-        //   data.bot_message = "Why do you want to watch a movie?";
-        //   data.guided_ans = ["Movie night with family", "Date night", "I'm just bored"];
-        // }
-        // else if(requirements.mood.length == 0){
-        //   data.bot_message = "How are you feeling today?";
-        //   data.guided_ans = ["I am happy", "I am sad", "I am bored"];
-        // }
-        // else{
-        //   data.bot_message = "Are you content with your recommendation?";
-        //   data.guided_ans = ["Yes", "No"];
-        // }
-
-
 
       }).catch(()=> {console.log("FAILED")})
         // send nlp 
@@ -127,7 +109,7 @@ io.on('connection', function(socket) {
     });
 });
 
-function showESResult(result){
+function showESResult(result, socket){
   try {
     // Check if Elasticsearch returns a response
     if(result.response.length >0 && result.noResult !== true){
@@ -186,7 +168,7 @@ function showESResult(result){
         
         console.log(result)
         // Send back to frontend
-        io.emit('MESSAGE', result);
+        socket.emit('MESSAGE', result);
       }
     }else{
       request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":result.message} }, (err, res, searchTokens) => {
@@ -212,7 +194,7 @@ function showESResult(result){
 
           console.log(result)
           // Send back to frontend
-          io.emit('MESSAGE', result);
+          socket.emit('MESSAGE', result);
         });
     }
   } catch (error) {
