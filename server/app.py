@@ -3,11 +3,14 @@
 #then, if the neural network is called "app.py", just type "flask run", otherwise you must set an environment variable for FLASK_APP via set FLASK_APP=filename.py
 #but this seems to not work sometimes, but leaving it named app.py (default flask app name) seems to work
 # pip install Flask
+# pip install git+https://github.com/casics/nostril.git
 from flask import Flask,request
 import json
 import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from rake_nltk import Rake
+from nostril import nonsense
 import spacy
 import pickle
 from difflib import SequenceMatcher
@@ -117,8 +120,11 @@ def checkRuntime(user_text):
 # if words like old return ["lte", "2005-01-01"] by default
 # if words like new return ["gte", "2015-01-01"]
 def checkReleaseDate(user_text):
-    requestType = ["made in", "released in", "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after"]
+    requestType = ["made in", "released in", "released after", "released before" "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after"]
     type ="eq"
+    # Check if string contains  the substring from the requestType
+    if not any(ele in user_text for ele in requestType):
+        return []
     for z in requestType:
         if z in user_text:
             if z in ["newer than", "made after","created after"]:
@@ -136,7 +142,7 @@ def checkReleaseDate(user_text):
     except ValueError:
         return []
 
-def calculate(user_text):
+def classify(user_text):
     user_text_tokenized = word_tokenize(user_text.lower())
     stopwords = nltk.corpus.stopwords.words('english')
     new_stopwords=('movie', 'movies')
@@ -157,11 +163,37 @@ def calculate(user_text):
         'original_language': checkList(user_tokens_filtered,languageName,"Language"), 
         'adult': checkList(user_tokens_removed_Proper_Nouns,ageRestrictionWords,"Age restriction"), 
         'runtime': checkRuntime(user_text), 
-        'unclassified': []
+        'unclassified': ""
         }
+
+    # When sentence is unclassified, extract keywords from the sentence
     if keywords["genre"] == [] and keywords["production_company"] == [] and keywords["cast"] == [] and keywords["release_date"] == [] and keywords["original_language"] == [] and keywords["adult"] == [] and keywords["runtime"] == []:
-        keywords["unclassified"] = "None"
+        stopwords = nltk.corpus.stopwords.words('english')
+        # stopwords.remove("don")
+        # stopwords.remove("don't")
+        # stopwords.remove("do")
+        # stopwords.remove("not")
+        new_stopwords=('movie', 'movies', 'film', 'films', 'want', 'would like', 'dont')
+        stopwords.extend(new_stopwords)
+
+        r = Rake(stopwords=stopwords)
+
+        # Extraction given the text.
+        r.extract_keywords_from_text(user_text)
+
+        # To get keyword phrases ranked highest to lowest with scores.
+        result = r.get_ranked_phrases()
+        filtered_result = []
+        for token in result:
+            # nonsense is limited to only check strings with 6 letters
+            if len(token) < 6:
+                filtered_result.append(token)
+            elif not nonsense(token):
+                filtered_result.append(token)
+
+        keywords["unclassified"] = ' '.join(filtered_result)
     return(keywords)
+
 with open(r"server/cast.txt", "rb") as f:
     castName = pickle.load(f)
 castNameSet = set(castName)
@@ -196,7 +228,7 @@ app = Flask(__name__)
 def result():
     output=request.get_json()
     user_text = output["sentence"]
-    results = calculate(user_text)
+    results = classify(user_text)
 
     return (results)
 

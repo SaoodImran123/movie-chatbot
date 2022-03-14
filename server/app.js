@@ -203,6 +203,7 @@ function combineArray(data, newSearchTokens){
   data.searchTokens.original_language = [...new Set([...data.searchTokens.original_language, ...newSearchTokens.original_language])];
   data.searchTokens.adult = [...new Set([...data.searchTokens.adult, ...newSearchTokens.adult])];
   data.searchTokens.runtime = [...new Set([...data.searchTokens.runtime, ...newSearchTokens.runtime])];
+  data.searchTokens.unclassified = data.searchTokens.unclassified + " " + newSearchTokens.unclassified;
   return data;
 }
 

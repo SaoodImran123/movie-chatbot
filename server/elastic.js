@@ -124,17 +124,19 @@ module.exports = {
                 for (let i = 0; i < release_date.length; i++){
                     if (i > 0){
                         if(release_date[0] == "eq"){
-                            // Range between the given date
+                            // Range between the given date (current year to next year)
+                            nextYr = new Date(release_date[1]).setFullYear(new Date(release_date[1]).getFullYear() + 1);
                             should.push({range: {"release_date": {"gte": release_date[1]}}});
-                            should.push({range: {"release_date": {"lte": (new Date(release_date[1]).getDate() + parseInt(366)).toString()}}});
+                            should.push({range: {"release_date": {"lte": nextYr}}});
                         }else{
                             should.push({range: {"release_date": {[release_date[0]]: release_date[1]}}});
                         }
                     } else{
                         if(release_date[0] == "eq"){
                             // Range between the given date
+                            nextYr = new Date(release_date[1]).setFullYear(new Date(release_date[1]).getFullYear() + 1);
                             must.push({range: {"release_date": {"gte": release_date[1]}}});
-                            must.push({range: {"release_date": {"lte": (new Date(release_date[1]).getDate() + parseInt(366)).toString()}}});
+                            must.push({range: {"release_date": {"lte": nextYr}}});
                         }else{
                             must.push({range: {"release_date": {[release_date[0]]: release_date[1]}}});
                         }
