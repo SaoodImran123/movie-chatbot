@@ -113,7 +113,7 @@ def checkCast(castNameSet, ppn):
         for y in castNameSet:
             if word == y:
                 cast.append(y)
-                ppn.remove(X)
+                ppn.remove(x)
 
     if len(ppn) > 0:
         for x in ppn:
