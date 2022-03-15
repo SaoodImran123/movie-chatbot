@@ -35,7 +35,7 @@ from gibberish_detector import detector
 categories = ["genre", "production_company", "cast", "release_date", "language", "age_restriction", "runtime"]
 
 nlp = spacy.load("en_core_web_trf", exclude=["tok2vec", "ner"])
-Detector = detector.create_from_model('.\server\gibberish-detector.model')
+Detector = detector.create_from_model('server/gibberish-detector.model')
 
 # For Cast and Production companies
 def extract_proper_nouns(doc):
