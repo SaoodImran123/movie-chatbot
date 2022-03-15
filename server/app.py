@@ -30,6 +30,9 @@ from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 import datetime
 from gibberish_detector import detector
+import sys
+from spacy.tokenizer import Tokenizer
+from spacy.util import compile_infix_regex
 
 # Constants
 categories = ["genre", "production_company", "cast", "release_date", "language", "age_restriction", "runtime"]
@@ -37,9 +40,24 @@ categories = ["genre", "production_company", "cast", "release_date", "language",
 nlp = spacy.load("en_core_web_trf", exclude=["tok2vec", "ner"])
 Detector = detector.create_from_model('server/gibberish-detector.model')
 
+def custom_tokenizer(nlp):
+    inf = list(nlp.Defaults.infixes)               # Default infixes
+    inf.remove(r"(?<=[0-9])[+\-\*^](?=[0-9-])")    # Remove the generic op between numbers or between a number and a -
+    inf = tuple(inf)                               # Convert inf to tuple
+    infixes = inf + tuple([r"(?<=[0-9])[+*^](?=[0-9-])", r"(?<=[0-9])-(?=-)"])  # Add the removed rule after subtracting (?<=[0-9])-(?=[0-9]) pattern
+    infixes = [x for x in infixes if '-|–|—|--|---|——|~' not in x] # Remove - between letters rule
+    infixes = [x for x in infixes if '/' not in x] # Remove / between letters rule
+    infix_re = compile_infix_regex(infixes)
+
+    return Tokenizer(nlp.vocab, prefix_search=nlp.tokenizer.prefix_search,
+                                suffix_search=nlp.tokenizer.suffix_search,
+                                infix_finditer=infix_re.finditer,
+                                token_match=nlp.tokenizer.token_match,
+                                rules=nlp.Defaults.tokenizer_exceptions)
+
 # For Cast and Production companies
 def extract_proper_nouns(doc):
-    pos = [tok.i for tok in doc if (tok.pos_ == "PROPN" or tok.text == "marvel")]
+    pos = [tok.i for tok in doc if (tok.pos_ == "PROPN" or tok.pos_ == "NOUN" or tok.pos_ == "NUM")]
     consecutives = []
     current = []
     for elt in pos:
@@ -64,21 +82,25 @@ def checkList(user_tokens,List, type):
     return arr
 
 def checkProductionCompanies(productionCompaniesName, ppn):
-    score = 0
     companies = []
     if len(ppn) > 0:
         for x in ppn:
-            word = str(x.text.strip()).lower()
+            word = str(x.strip()).lower()
             for y in productionCompaniesName:
                 if word in y:
-                    if SequenceMatcher(None, word, y).ratio() > 0.6 :
-                         if score < SequenceMatcher(None,word, y).ratio():
-                            if score > 0:
-                                companies[0] = y
-                            else:
-                                companies.append(y)
-                            score = SequenceMatcher(None,word, y).ratio()
-                        
+                    if word == y:
+                        companies.append(y)
+                        ppn.remove(x)
+
+    # Check for remaining ppn then do sequence matcher when there is no exact match
+    if len(ppn) > 0:            
+        for x in ppn:
+            word = str(x.strip()).lower()
+            for y in productionCompaniesName:
+                if word in y:
+                    if SequenceMatcher(None, word, y).ratio() >= 0.46:
+                        companies.append(y)
+
     return companies
 
 def checkCast(castNameSet, ppn):
@@ -87,30 +109,40 @@ def checkCast(castNameSet, ppn):
         return []
 
     for x in ppn:
-        word = str(x.text.strip()).lower()
+        word = str(x.strip()).lower()
         for y in castNameSet:
-            if word in y:
-                if word == y and word != "disney":
+            if word == y:
+                cast.append(y)
+                ppn.remove(X)
+
+    if len(ppn) > 0:
+        for x in ppn:
+            word = str(x.strip()).lower()
+            for y in castNameSet:
+                if SequenceMatcher(None, word, y).ratio() >= 0.9:
                     cast.append(y)
-                    break
+
     return cast
 
 def checkCharacters(characterSet, ppn):
-    score = 0
     character = []
     if len(ppn) < 1: 
         return []
 
     for x in ppn:
-        word = str(x.text.strip()).lower()
+        word = str(x.strip()).lower()
         for y in characterSet:
-            if SequenceMatcher(None,word, y).ratio() > 0.9:
-                if score < SequenceMatcher(None,word, y).ratio():
-                    if score > 0:
-                        character[0] = y
-                    else:
-                        character.append(y)
-                    score = SequenceMatcher(None,word, y).ratio()
+            filtered_y = y.replace('-', ' ', 1)
+            if word == filtered_y or word == y:
+                character.append(y)
+                ppn.remove(x)
+    
+    if len(ppn) > 0:
+        for x in ppn:
+            word = str(x.strip()).lower()
+            for y in characterSet:
+                if SequenceMatcher(None, word, y).ratio() >= 0.9:
+                    character.append(y)
                 
     return character
 
@@ -212,27 +244,52 @@ def checkReleaseDate(user_text):
         return []
 
 def classify(user_text):
+    nlp.tokenizer = custom_tokenizer(nlp)
     user_text_tokenized = word_tokenize(user_text.lower())
     stopwords = nltk.corpus.stopwords.words('english')
-    new_stopwords=('movie', 'movies')
+    stopwords.remove("will")
+    new_stopwords=('movie', 'movies', 'film', 'films')
     stopwords.extend(new_stopwords)
     true_case = truecase.get_true_case(user_text)
     user_tokens_filtered = set([word for word in user_text_tokenized if not word in stopwords])
 
     doc = nlp(true_case)
     ppn = extract_proper_nouns(doc)
+    print(ppn,file=sys.stderr)
     ppnString = [x.text.strip().lower() for x in ppn]
+
+    #remove stop words for each token
+    filtered_ppn =[]
+    for token in ppn:
+        arr = token.text.split()
+        filtered_ppn.append(" ".join([word for word in arr if not word in stopwords]))
+
+    filtered_ppn = [x.lower().strip()for x in filtered_ppn]
+    filtered_ppn = [i for i in filtered_ppn if i]
+    print(filtered_ppn, file=sys.stderr)
+                
     
     user_tokens_removed_Proper_Nouns = [x for x in user_tokens_filtered if x not in ppnString]
+
+    # remove genre from the tokens
+    genre = checkList(user_tokens_filtered,genreName,"Genre")
+    if len(genre) > 0:
+        for token in genre:
+            filtered_ppn = list([word for word in filtered_ppn if token not in word])
+    
+    production_company = checkProductionCompanies(productionCompaniesName, filtered_ppn)
+    if len(production_company) > 0:
+        for token in production_company:
+            filtered_ppn = list([word for word in filtered_ppn if token not in word])
     keywords = {
-        'genre': checkList(user_tokens_filtered,genreName,"Genre"), 
-        'production_company': checkProductionCompanies(productionCompaniesName, ppn), 
-        'cast': checkCast(castNameSet, ppn), 
+        'genre': genre, 
+        'production_company': production_company, 
+        'cast': checkCast(castNameSet, filtered_ppn), 
         'release_date': checkReleaseDate(user_text), 
         'original_language': checkList(user_tokens_filtered,languageName,"Language"), 
         'adult': checkList(user_tokens_removed_Proper_Nouns,ageRestrictionWords,"Age restriction"), 
         'runtime': checkRuntime(user_text), 
-        'character': checkCharacters(castCharactersSet, ppn),
+        'character': checkCharacters(castCharactersSet, filtered_ppn),
         'unclassified': ""
         }
 

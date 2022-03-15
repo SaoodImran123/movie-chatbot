@@ -18,7 +18,8 @@ print("Finished cast")
 productionCompaniesData = collectionTMDB_Production_Companies.find({"id": {"$lte": 20000}, "logo_path": {"$ne": "null"}})
 productionCompaniesName = []
 for x in productionCompaniesData:
-    productionCompaniesName.append(x["name"].lower())
+    if x["name"].lower() != "disneynature":
+        productionCompaniesName.append(x["name"].lower())
 
 productionCompaniesName = list(set(productionCompaniesName) - set(castName))
 print("Finished production companies")
@@ -28,7 +29,7 @@ movieData = collectionMovieCredits.find({"cast.known_for_department": "Acting"})
 for x in movieData:
     for y in x["cast"]:
         if y["character"]:
-            if y["popularity"] > 25 and y["known_for_department"] == "Acting" and "Self" not in y["character"] and "voice" not in y["character"] and  "Narrator" not in y["character"] and "self" not in y["character"]:
+            if y["popularity"] >= 20 and "Self" not in y["character"] and "voice" not in y["character"] and  "Narrator" not in y["character"] and "self" not in y["character"]:
                 if " / " in y["character"]:
                     char = y["character"].lower().split(" / ")
                     castCharacters.append(char[0])
