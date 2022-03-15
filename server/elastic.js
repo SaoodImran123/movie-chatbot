@@ -227,9 +227,6 @@ module.exports = {
             console.log("Elastic Query");
             console.log(JSON.stringify(query));
             client.search(query).then(function(resp) {
-                console.log("ES: ")
-                console.log(resp.hits.hits);
-                console.log(data.response);
 
                 old_id = []
                 new_id = []

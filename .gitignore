@@ -23,3 +23,4 @@ pnpm-debug.log*
 *.sw?
 /server/bert_model/
 /server/*.txt
+!/server/big.txt

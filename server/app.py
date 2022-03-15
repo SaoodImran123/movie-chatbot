@@ -7,8 +7,10 @@
 # pip install truecase
 # pip install -U pip setuptools wheel
 # python -m spacy download en_core_web_trf
-# >run Data.py
 # pip install pymongo
+# pip install gibberish-detector
+# gibberish-detector train .\big.txt > gibberish-detector.model (not needed if model exists)
+# >run Data.py
 # cd server
 # python Data.py
 
@@ -27,11 +29,13 @@ from datetime import datetime
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 import datetime
+from gibberish_detector import detector
 
 # Constants
 categories = ["genre", "production_company", "cast", "release_date", "language", "age_restriction", "runtime"]
 
 nlp = spacy.load("en_core_web_trf", exclude=["tok2vec", "ner"])
+Detector = detector.create_from_model('.\server\gibberish-detector.model')
 
 # For Cast and Production companies
 def extract_proper_nouns(doc):
@@ -252,7 +256,7 @@ def classify(user_text):
         filtered_result = []
         for token in result:
             # check for nonsense
-            if token in words.words():
+            if not Detector.is_gibberish(token):
                 filtered_result.append(token)
         
         keywords["unclassified"] = ' '.join(filtered_result)

@@ -84,4 +84,7 @@ html{
 .column2{
     flex: 30%;
 }
+img{
+  max-width: 100%;
+}
 </style>
