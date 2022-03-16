@@ -120,12 +120,12 @@ def keywordExtraction(categoryNumber):
 
     # For Age restriction
     if categoryNumber == categories.index("age_restriction"):
-        ageRestriction = "false"
+        ageRestriction = "true"
         childFilter = ["child", "baby", "youngster", "adolescent", "teenager", "youth", "toddler", "G", "PG-13", "PG13",
                        "family"]
         for token in doc:
             if token.lemma_ in childFilter:
-                ageRestriction = "true"
+                ageRestriction = "false"
 
         return ageRestriction
 

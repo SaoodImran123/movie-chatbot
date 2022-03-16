@@ -11,7 +11,7 @@ app.use(cors({
   origin: '*'
 }))
 
-const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"];
+const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "runtime"];
 
 
 
@@ -147,9 +147,6 @@ function showESResult(result, socket){
         }else if(REQUIREMENTS[reqIndex] == "original_language"){
           result.bot_message = ["What would you like the language to be?", "Do you prefer a movie with a specific language?", "Any preference on the language of the movie?"];
           result.guided_ans = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
-        }else if(REQUIREMENTS[reqIndex] == "adult"){
-          result.bot_message = ["Is there an intended audience?", "What is the intended audience?"];
-          result.guided_ans = ["I would like movies to watch with my family", "I want R rated movies", "I want PG rated movies"];
         }else if(REQUIREMENTS[reqIndex] == "runtime"){
           result.bot_message = ["How long do you want the movie to be?", "Any preference on the movie length?"];
           result.guided_ans = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want a short movie"];
@@ -203,28 +200,33 @@ function showESResult(result, socket){
 }
 
 // Check if JSON meets the requirements to complete a prediction
-// Requirements are in the order of ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
+// Requirements are in the order of ["genre", "production_company", "cast", "release_date", "original_language", "runtime"]
 function checkRequirements(data){
-  data.requirements[0] = data.searchTokens.genre.length > 0 ? true: false;
-  data.requirements[1] = data.searchTokens.production_company.length > 0 ? true: false;
-  data.requirements[2] = data.searchTokens.cast.length > 0 ? true: false;
-  data.requirements[3] = data.searchTokens.release_date.length > 0 ? true: false;
-  data.requirements[4] = data.searchTokens.original_language.length > 0 ? true: false;
-  data.requirements[5] = data.searchTokens.adult.length > 0 ? true: false;
-  data.requirements[6] = data.searchTokens.runtime.length > 0 ? true: false;
-
+  data.requirements[0] = data.searchTokens.genre[0].length > 0 ? true: false || data.searchTokens.genre[1].length > 0 ? true: false;
+  data.requirements[1] = data.searchTokens.production_company[0].length > 0 ? true: false || data.searchTokens.production_company[1].length > 0 ? true: false;
+  data.requirements[2] = data.searchTokens.cast[0].length > 0 ? true: false || data.searchTokens.cast[1].length > 0 ? true: false;
+  data.requirements[3] = data.searchTokens.release_date[0].length > 0 ? true: false || data.searchTokens.release_date[1].length > 0 ? true: false;
+  data.requirements[4] = data.searchTokens.original_language[0].length > 0 ? true: false || data.searchTokens.original_language[1].length > 0 ? true: false;
+  data.requirements[5] = data.searchTokens.runtime[0].length > 0 ? true: false || data.searchTokens.runtime[0].length > 0 ? true: false;
   return data;
 }
 
 // Append search tokens by getting the union of the arrays for each category
 function combineArray(data, newSearchTokens){
-  data.searchTokens.genre = [...new Set([...data.searchTokens.genre, ...newSearchTokens.genre])];
-  data.searchTokens.production_company = [...new Set([...data.searchTokens.production_company, ...newSearchTokens.production_company])];
-  data.searchTokens.cast = [...new Set([...data.searchTokens.cast, ...newSearchTokens.cast])];
-  data.searchTokens.release_date = [...new Set([...data.searchTokens.release_date, ...newSearchTokens.release_date])];
-  data.searchTokens.original_language = [...new Set([...data.searchTokens.original_language, ...newSearchTokens.original_language])];
-  data.searchTokens.adult = [...new Set([...data.searchTokens.adult, ...newSearchTokens.adult])];
-  data.searchTokens.runtime = [...new Set([...data.searchTokens.runtime, ...newSearchTokens.runtime])];
+  data.searchTokens.genre[0] = [...new Set([...data.searchTokens.genre[0], ...newSearchTokens.genre[0]])];
+  data.searchTokens.genre[1] = [...new Set([...data.searchTokens.genre[1], ...newSearchTokens.genre[1]])];
+  data.searchTokens.production_company[0] = [...new Set([...data.searchTokens.production_company[0], ...newSearchTokens.production_company[0]])];
+  data.searchTokens.production_company[1] = [...new Set([...data.searchTokens.production_company[1], ...newSearchTokens.production_company[1]])];
+  data.searchTokens.cast[0] = [...new Set([...data.searchTokens.cast[0], ...newSearchTokens.cast[0]])];
+  data.searchTokens.cast[1] = [...new Set([...data.searchTokens.cast[1], ...newSearchTokens.cast[1]])];
+  data.searchTokens.release_date[0] = [...new Set([...data.searchTokens.release_date[0], ...newSearchTokens.release_date[0]])];
+  data.searchTokens.release_date[1] = [...new Set([...data.searchTokens.release_date[1], ...newSearchTokens.release_date[1]])];
+  data.searchTokens.original_language[0] = [...new Set([...data.searchTokens.original_language[0], ...newSearchTokens.original_language[0]])];
+  data.searchTokens.original_language[1] = [...new Set([...data.searchTokens.original_language[1], ...newSearchTokens.original_language[1]])];
+  data.searchTokens.adult[0] = [...new Set([...data.searchTokens.adult[0], ...newSearchTokens.adult[0]])];
+  data.searchTokens.adult[1] = [...new Set([...data.searchTokens.adult[1], ...newSearchTokens.adult[1]])];
+  data.searchTokens.runtime[0] = [...new Set([...data.searchTokens.runtime[0], ...newSearchTokens.runtime[0]])];
+  data.searchTokens.runtime[1] = [...new Set([...data.searchTokens.runtime[1], ...newSearchTokens.runtime[1]])];
   data.searchTokens.unclassified = newSearchTokens.unclassified == "" ? data.searchTokens.unclassified : data.searchTokens.unclassified + " " + newSearchTokens.unclassified;
   return data;
 }

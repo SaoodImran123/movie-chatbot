@@ -48,9 +48,9 @@ module.exports = {
     // Query elasticsearch
     elasticSearchQuery(data, client){
         return new Promise(function(resolve, reject){
-            var filter, must, not, should;
+            var filter, must, must_not, should;
             should = [];
-            not = [];
+            must_not = [];
             must = [
                 {
                     "exists": {
@@ -88,8 +88,8 @@ module.exports = {
             }
 
             // Search for genre
-            if(data.searchTokens.genre.length > 0){
-                var genres = data.searchTokens.genre;
+            if(data.searchTokens.genre[0].length > 0){
+                var genres = data.searchTokens.genre[0];
                 for (let i = 0; i < genres.length; i++){
                     if (i > 0){
                         should.push({"term": {"genres.name": genres[i]}});
@@ -99,9 +99,21 @@ module.exports = {
                 }
             }
 
+            // Negative Genre query
+            if(data.searchTokens.genre[1].length > 0){
+                var genres = data.searchTokens.genre[1];
+                for (let i = 0; i < genres.length; i++){
+                    if (i > 0){
+                        must_not.push({"term": {"genres.name": genres[i]}});
+                    }else{
+                        must_not.push({"term": {"genres.name": genres[i]}});
+                    }
+                }
+            }
+
             // Search for production company
-            if(data.searchTokens.production_company.length > 0){
-                var production_company = data.searchTokens.production_company;
+            if(data.searchTokens.production_company[0].length > 0){
+                var production_company = data.searchTokens.production_company[0];
                 for (let i = 0; i < production_company.length; i++){
                     if (i > 0){
                         should.push({"term": {"production_companies.name.keyword": {"value": production_company[i], "case_insensitive": true}}});
@@ -111,9 +123,21 @@ module.exports = {
                 }
             }
 
+            // Negative production company
+            if(data.searchTokens.production_company[1].length > 0){
+                var production_company = data.searchTokens.production_company[1];
+                for (let i = 0; i < production_company.length; i++){
+                    if (i > 0){
+                        must_not.push({"term": {"production_companies.name.keyword": {"value": production_company[i], "case_insensitive": true}}});
+                    }else{
+                        must_not.push({"term": {"production_companies.name.keyword": {"value": production_company[i], "case_insensitive": true}}});
+                    }
+                }
+            }
+
             // Search for cast
-            if(data.searchTokens.cast.length > 0){
-                var cast = data.searchTokens.cast;
+            if(data.searchTokens.cast[0].length > 0){
+                var cast = data.searchTokens.cast[0];
                 for (let i = 0; i < cast.length; i++){
                     if (i > 0){
                         should.push({"term": {"cast.name.keyword": {"value": cast[i], "case_insensitive": true}}});
@@ -123,9 +147,21 @@ module.exports = {
                 }
             }
 
+            // Search for cast
+            if(data.searchTokens.cast[1].length > 0){
+                var cast = data.searchTokens.cast[1];
+                for (let i = 0; i < cast.length; i++){
+                    if (i > 0){
+                        must_not.push({"term": {"cast.name.keyword": {"value": cast[i], "case_insensitive": true}}});
+                    }else{
+                        must_not.push({"term": {"cast.name.keyword": {"value": cast[i], "case_insensitive": true}}});
+                    }
+                }
+            }
+
             // Search for release date
-            if(data.searchTokens.release_date.length > 0){
-                var release_date = data.searchTokens.release_date;
+            if(data.searchTokens.release_date[0].length > 0){
+                var release_date = data.searchTokens.release_date[0];
                 for (let i = 0; i < release_date.length; i++){
                     if (i > 0){
                         if(release_date[0] == "eq"){
@@ -148,14 +184,43 @@ module.exports = {
                     }
 
                 }
-            }else{
-                // Default release date should be newer than 1990
-                filter.push({range: {"release_date": {"gte": "1990-01-01"}}});
             }
+            // else{
+            //     // Default release date should be newer than 1990
+            //     filter.push({range: {"release_date": {"gte": "1990-01-01"}}});
+            // }
+
+            // Search for release date
+            if(data.searchTokens.release_date[1].length > 0){
+                var release_date = data.searchTokens.release_date[1];
+                for (let i = 0; i < release_date.length; i++){
+                    if (i > 0){
+                        if(release_date[0] == "eq"){
+                            // Range between the given date (current year to next year)
+                            nextYr = new Date(release_date[1]).setFullYear(new Date(release_date[1]).getFullYear() + 1);
+                            must_not.push({range: {"release_date": {"gte": release_date[1]}}});
+                            must_not.push({range: {"release_date": {"lte": nextYr}}});
+                        }else{
+                            must_not.push({range: {"release_date": {[release_date[0]]: release_date[1]}}});
+                        }
+                    } else{
+                        if(release_date[0] == "eq"){
+                            // Range between the given date
+                            nextYr = new Date(release_date[1]).setFullYear(new Date(release_date[1]).getFullYear() + 1);
+                            must_not.push({range: {"release_date": {"gte": release_date[1]}}});
+                            must_not.push({range: {"release_date": {"lte": nextYr}}});
+                        }else{
+                            must_not.push({range: {"release_date": {[release_date[0]]: release_date[1]}}});
+                        }
+                    }
+
+                }
+            }
+            
 
             // Search for language
-            if(data.searchTokens.original_language.length > 0){
-                var original_language = data.searchTokens.original_language;
+            if(data.searchTokens.original_language[0].length > 0){
+                var original_language = data.searchTokens.original_language[0];
                 for (let i = 0; i < original_language.length; i++){
                     if (i > 0){
                         should.push({"term": {"original_language": original_language[i]}});
@@ -163,14 +228,40 @@ module.exports = {
                         must.push({"term": {"original_language": original_language[i]}});
                     }
                 }
-            }else{
-                // Default language should be english
-                filter.push({term: {"original_language": "en"}});
+            }
+            // else{
+            //     // Default language should be english
+            //     filter.push({term: {"original_language": "en"}});
+            // }
+
+            // Search for language
+            if(data.searchTokens.original_language[1].length > 0){
+                var original_language = data.searchTokens.original_language[1];
+                for (let i = 0; i < original_language.length; i++){
+                    if (i > 0){
+                        should.push({"term": {"original_language": original_language[i]}});
+                    }else{
+                        must.push({"term": {"original_language": original_language[i]}});
+                    }
+                }
+            }
+
+            
+            // Search for adult
+            if(data.searchTokens.adult[0].length > 0){
+                var adult = data.searchTokens.adult[0];
+                for (let i = 0; i < adult.length; i++){
+                    if (i > 0){
+                        should.push({"term": {"adult": adult[i] == "true" ? true : false}});
+                    }else{
+                        must.push({"term": {"adult": adult[i] == "true" ? true : false}});
+                    }
+                }
             }
 
             // Search for adult
-            if(data.searchTokens.adult.length > 0){
-                var adult = data.searchTokens.adult;
+            if(data.searchTokens.adult[1].length > 0){
+                var adult = data.searchTokens.adult[1];
                 for (let i = 0; i < adult.length; i++){
                     if (i > 0){
                         should.push({"term": {"adult": adult[i] == "true" ? true : false}});
@@ -181,8 +272,8 @@ module.exports = {
             }
 
             // Search for runtime
-            if(data.searchTokens.runtime.length > 0){
-                var runtime = data.searchTokens.runtime;
+            if(data.searchTokens.runtime[0].length > 0){
+                var runtime = data.searchTokens.runtime[0];
                 for (let i = 0; i < runtime.length; i++){
                     if (i > 0){
                         if(runtime[0] == "eq"){
@@ -202,9 +293,33 @@ module.exports = {
                         }
                     }
                 }
-            }else{
-                // Default runtime should be greater than 60 mins
-                filter.push( {range: {"runtime": {"gte": "60"}}});
+            }
+            // else{
+            //     // Default runtime should be greater than 60 mins
+            //     filter.push( {range: {"runtime": {"gte": "60"}}});
+            // }
+
+            if(data.searchTokens.runtime[1].length > 0){
+                var runtime = data.searchTokens.runtime[1];
+                for (let i = 0; i < runtime.length; i++){
+                    if (i > 0){
+                        if(runtime[0] == "eq"){
+                            // Range between the given runtime
+                            should.push({range: {"runtime": {"gte": (parseInt(runtime[1])-10).toString()}}});
+                            should.push({range: {"runtime": {"lte": (parseInt(runtime[1])+10).toString()}}});
+                        }else{
+                            should.push({range: {"runtime": {[runtime[0]]: runtime[1]}}});
+                        }
+                    }else{
+                        if(runtime[0] == "eq"){
+                            // Range between the given runtime
+                            must.push({range: {"runtime": {"gte": (parseInt(runtime[1])-10).toString()}}});
+                            must.push({range: {"runtime": {"lte": (parseInt(runtime[1])+10).toString()}}});
+                        }else{
+                            must.push({range: {"runtime": {[runtime[0]]: runtime[1]}}});
+                        }
+                    }
+                }
             }
 
             var query = {
@@ -214,6 +329,7 @@ module.exports = {
                     query: {
                         bool: {
                             must: must,
+                            must_not: must_not,
                             should: should,
                             filter: filter
                         }

@@ -36,9 +36,14 @@ from spacy.util import compile_infix_regex
 
 # Constants
 categories = ["genre", "production_company", "cast", "release_date", "language", "age_restriction", "runtime"]
+language = {"af": "afrikaans", "sq": "albanian", "am": "amharic", "ar": "arabic", "hy": "armenian", "az": "azerbaijani", "eu": "basque", "be": "belarusian", "bn": "bengali", "bs": "bosnian", "bg": "bulgarian", "ca": "catalan", "ceb": "cebuano", "ny": "chichewa", "zh-cn": "chinese (simplified)", "zh-tw": "chinese (traditional)", "co": "corsican", "hr": "croatian", "cs": "czech", "da": "danish", "nl": "dutch", "en": "english", "eo": "esperanto", "et": "estonian", "tl": "filipino", "fi": "finnish", "fr": "french", "fy": "frisian", "gl": "galician", "ka": "georgian", "de": "german", "el": "greek", "gu": "gujarati", "ht": "haitian creole", "ha": "hausa", "haw": "hawaiian", "iw": "hebrew", "hi": "hindi", "hmn": "hmong", "hu": "hungarian", "is": "icelandic", "ig": "igbo", "id": "indonesian", "ga": "irish", "it": "italian", "ja": "japanese", "jw": "javanese", "kn": "kannada", "kk": "kazakh", "km": "khmer", "ko": "korean", "ku": "kurdish (kurmanji)", "ky": "kyrgyz", "lo": "lao", "la": "latin", "lv": "latvian", "lt": "lithuanian", "lb": "luxembourgish", "mk": "macedonian", "mg": "malagasy", "ms": "malay", "ml": "malayalam", "mt": "maltese", "mi": "maori", "mr": "marathi", "mn": "mongolian", "my": "myanmar (burmese)", "ne": "nepali", "no": "norwegian", "ps": "pashto", "fa": "persian", "pl": "polish", "pt": "portuguese", "pa": "punjabi", "ro": "romanian", "ru": "russian", "sm": "samoan", "gd": "scots gaelic", "sr": "serbian", "st": "sesotho", "sn": "shona", "sd": "sindhi", "si": "sinhala", "sk": "slovak", "sl": "slovenian", "so": "somali", "es": "spanish", "su": "sundanese", "sw": "swahili", "sv": "swedish", "tg": "tajik", "ta": "tamil", "te": "telugu", "th": "thai", "tr": "turkish", "uk": "ukrainian", "ur": "urdu", "uz": "uzbek", "vi": "vietnamese", "cy": "welsh", "xh": "xhosa", "yi": "yiddish", "yo": "yoruba", "zu": "zulu", "fil": "filipino", "he": "hebrew"}
+languageName = list(language.values())
 
 nlp = spacy.load("en_core_web_trf", exclude=["tok2vec", "ner"])
 Detector = detector.create_from_model('server/gibberish-detector.model')
+
+def getKeyFromValue(value):
+    return list(language.keys())[list(language.values()).index(value)]
 
 def custom_tokenizer(nlp):
     inf = list(nlp.Defaults.infixes)               # Default infixes
@@ -57,7 +62,7 @@ def custom_tokenizer(nlp):
 
 # For Cast and Production companies
 def extract_proper_nouns(doc):
-    pos = [tok.i for tok in doc if (tok.pos_ == "PROPN" or tok.pos_ == "NOUN" or tok.pos_ == "NUM")]
+    pos = [tok.i for tok in doc if (tok.pos_ == "PROPN" or tok.pos_ == "NOUN" or tok.pos_ == "NUM" or tok.pos_ == "ADJ")]
     consecutives = []
     current = []
     for elt in pos:
@@ -81,8 +86,24 @@ def checkList(user_tokens,List, type):
             arr.append(x)
     return arr
 
+def checkAgeRestriction(user_tokens):
+    ageRestrictionWords = ["children", "adult", "child", "kid", "r rated", "pg rated", "rated r", "rated pg", "younger audience", "appropriate", "inappropriate", "lewd", "pg", "g", "pg-13", "pg13",]
+    childFilter = ["child","children", "baby", "youngster", "adolescent", "teenager", "youth", "toddler", "g", "pg-13", "pg13", "pg rated","rated pg"]
+    adultFilter = ["adult", "r rated", "rated r", "inappropriate", "lewd"]
+    
+    for token in user_tokens:
+        if token.lower() in ageRestrictionWords:
+            if token.lower() in childFilter:
+                return ["false"], [token]
+            elif token.lower() in adultFilter:
+                return ["true"], [token]
+
+    return [], []
+
 def checkProductionCompanies(productionCompaniesName, ppn):
     companies = []
+    removed = []
+
     if len(ppn) > 0:
         for x in ppn:
             word = str(x.strip()).lower()
@@ -90,7 +111,9 @@ def checkProductionCompanies(productionCompaniesName, ppn):
                 if word in y:
                     if word == y:
                         companies.append(y)
-                        ppn.remove(x)
+                        removed.append(y)
+    
+    ppn = list(set(ppn) - set(removed))
 
     # Check for remaining ppn then do sequence matcher when there is no exact match
     if len(ppn) > 0:            
@@ -98,13 +121,14 @@ def checkProductionCompanies(productionCompaniesName, ppn):
             word = str(x.strip()).lower()
             for y in productionCompaniesName:
                 if word in y:
-                    if SequenceMatcher(None, word, y).ratio() >= 0.46:
+                    if SequenceMatcher(None, word, y).quick_ratio() >= 0.45 and word in y:
                         companies.append(y)
 
     return companies
 
 def checkCast(castNameSet, ppn):
     cast = []
+    removed = []
     if len(ppn) < 1: 
         return []
 
@@ -113,19 +137,21 @@ def checkCast(castNameSet, ppn):
         for y in castNameSet:
             if word == y:
                 cast.append(y)
-                ppn.remove(x)
+                removed.append(y)
 
+    ppn = list(set(ppn) - set(removed))
     if len(ppn) > 0:
         for x in ppn:
             word = str(x.strip()).lower()
             for y in castNameSet:
-                if SequenceMatcher(None, word, y).ratio() >= 0.9:
+                if SequenceMatcher(None, word, y).quick_ratio() >= 0.9 and word in y:
                     cast.append(y)
 
     return cast
 
 def checkCharacters(characterSet, ppn):
     character = []
+    removed = []
     if len(ppn) < 1: 
         return []
 
@@ -135,13 +161,14 @@ def checkCharacters(characterSet, ppn):
             filtered_y = y.replace('-', ' ', 1)
             if word == filtered_y or word == y:
                 character.append(y)
-                ppn.remove(x)
-    
+                removed.append(y)
+
+    ppn = list(set(ppn) - set(removed))
     if len(ppn) > 0:
         for x in ppn:
             word = str(x.strip()).lower()
             for y in characterSet:
-                if SequenceMatcher(None, word, y).ratio() >= 0.9:
+                if SequenceMatcher(None, word, y).quick_ratio() >= 0.9 and word in y:
                     character.append(y)
                 
     return character
@@ -156,9 +183,16 @@ def checkRuntime(user_text):
                 type = "gte"
             elif z in ["less than","shorter", "no more","short"]:
                 type = "lte"
-            
-
             break
+    
+    generalRegex = "\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr|\d+min|\d+\smin|\d+m"
+    generalRequest = re.findall(generalRegex,user_text)
+    
+    if generalRequest:
+        print(generalRequest,file=sys.stderr)
+        timeFrame = re.findall("[-+]?(?:\d*\.\d+|\d+)",generalRequest[0])
+        date = parse(timeFrame[0])
+
     #timeMention1 = re.findall("\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+min|\d+\smin|\d+m",user_text)
     hrMinAmount = re.findall("\d+:\d+",user_text)
     hrAmount = re.findall("\d+hr|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr",user_text)
@@ -177,10 +211,10 @@ def checkRuntime(user_text):
         hrsConvert = hrMinAmount[0].split(":")[0]
         minsConvert = hrMinAmount[0].split(":")[1]
         finalhrs = int(int(hrsConvert)*60) + int(minsConvert)
-        return [type, str(finalhrs)]
+        return [type, str(finalhrs)], generalRequest
     if finalMins > 0:
-        return [type, str(finalMins)]
-    return []
+        return [type, str(finalMins)], generalRequest
+    return [], []
     
 
 # if user specified a year like 2015 return [["gte", "2015-01-01"], ["lte", "2016-01-01"]]
@@ -189,28 +223,44 @@ def checkRuntime(user_text):
 # if words like old return ["lte", "2005-01-01"] by default
 # if words like new return ["gte", "2015-01-01"]
 def checkReleaseDate(user_text):
-    requestType = ["made in", "released in", "released later" "released after", "released before" "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "past", "created after"]
+    requestType = ["in the last", "in the year","in the past", "in this", "made in", "released in", "released later" "released after", "released before" "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after"]
     type ="eq"
     yr = 0
     mn = 0
     dy = 0
     # Check if string contains  the substring from the requestType
     if not any(ele in user_text for ele in requestType):
-        return []
+        return [], []
+    
     for z in requestType:
         if z in user_text:
-            if z in ["newer than", "made after","created after", "released later", "past"]:
+            # user_text = user_text[user_text.index(z): len(user_text)]
+            # print(user_text,file=sys.stderr)
+            if z in ["last" + "newer than", "made after","created after", "released later", "past"]:
                 type = "gte"
             elif z in ["older than", "from before", "made before","created before"]:
                 type = "lte"
 
     try:
-        if "past" in user_text:
-            singleYear = re.findall("past+\syear",user_text)
-            pastYear = re.findall("past+\s+\d+\syears?|past+\s+\d+years?",user_text)
-            pastMonth = re.findall("past+\s+\d+\smonths?|past+\s+\d+months?",user_text)
-            pastDays = re.findall("past+\s+\d+\sdays?|past+\s+\d+days?",user_text)
-            yearsAndMonths = re.findall("past+\s+\d+years?\sand+\s+\d+month|past+\s+\d+\syears?\sand+\s+\d+\smonths?",user_text)
+        test_list = ["year", "past", "month", "day"]
+
+        for request in requestType:
+            generalRegex = re.escape(request) + r"\s+\d+"
+            generalRequest = re.findall(generalRegex,user_text)
+            
+            if generalRequest:
+                print(generalRequest,file=sys.stderr)
+                timeFrame = re.findall("[-+]?(?:\d*\.\d+|\d+)",generalRequest[0])
+                date = parse(timeFrame[0])
+                break
+
+        if any(ele in user_text for ele in test_list):
+
+            singleYear = re.findall("[pl]+ast+\syear",user_text)
+            pastYear = re.findall("[pl]ast+\s+\d+\syears?|[pl]ast+\s+\d+years?",user_text)
+            pastMonth = re.findall("[pl]past+\s+\d+\smonths?|[pl]ast+\s+\d+months?",user_text)
+            pastDays = re.findall("[pl]ast+\s+\d+\sdays?|[pl]ast+\s+\d+days?",user_text)
+            yearsAndMonths = re.findall("[pl]ast+\s+\d+years?\sand+\s+\d+month|[pl]ast+\s+\d+\syears?\sand+\s+\d+\smonths?",user_text)
             if singleYear:
                 yr = 1
             if pastYear:
@@ -226,8 +276,8 @@ def checkReleaseDate(user_text):
                 yearsAndMonths = re.findall("[-+]?(?:\d*\.\d+|\d+)",yearsAndMonths[0])
                 yr = 0
                 mn = int(yearsAndMonths[0]) * 12 + int(yearsAndMonths[1])
-        date = parse(user_text,fuzzy=True)
-        today = date.today()
+
+        today = datetime.datetime.today()
         if yr > 0 or mn > 0 or dy > 0:
             requestedTimeFrame = today - relativedelta(years=yr)
             requestedTimeFrame = requestedTimeFrame - relativedelta(months=mn)
@@ -239,9 +289,61 @@ def checkReleaseDate(user_text):
             date = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
             date = datetime.datetime.strptime(date, "%Y-%m-%d").strftime("%Y-%m-%d")
         
-        return [type, date]
+        return [type, date], generalRequest
     except ValueError:
-        return []
+        return [], []
+
+# Determine if sentence with specific keyword is positive
+def checkPolarityGivenKeyword(sentences, keyword):
+    conj = ["but", "yet", "except"]
+    negative_words = ["hate", "hated", "despise", "detest", "dont", "nor"]
+    sentence = []
+    prev_sentence = []
+    filtered_keyword = keyword.replace('-', ' ', 1).lower()
+    pos = True
+    print(keyword,file=sys.stderr)
+    # find list with the keyword
+    for substr in sentences:
+        if keyword.lower() in substr.text.lower() or filtered_keyword in substr.text.lower():
+            sentence = substr
+
+    if len(sentence) > 0:
+         # Check sentence if it contains a negative word
+        for tok in sentence:
+            if tok.dep_ == 'neg' or tok.text.lower() in negative_words:
+                return False
+        
+        # Check if sentence has a CCONj/SCONJ
+        for tok in sentence:
+            
+            if (tok.pos_ == "SCONJ" or tok.pos_ == "CCONJ") or tok.text.lower() in conj:
+                pos = False
+
+                # Find index of current sentence to check previous sentence for its polarity
+                index = sentences.index(sentence)
+                if index > 0:
+                    prev_sentence = sentences[index -1]
+
+                # Check previous sentence if it contains a negative word, if it does then this sentence is positive
+                for token in prev_sentence:
+                    if token.dep_ == 'neg' or token.text.lower() in negative_words:
+                        pos = True
+    print(pos,file=sys.stderr)
+    return pos
+
+
+def checkPolarity(keywords, sentences):
+    positiveArr = []
+    negativeArr = []
+    for token in keywords:
+        # Check polarity of the token
+        if checkPolarityGivenKeyword(sentences, token):
+            positiveArr.append(token)
+        else:
+            negativeArr.append(token)
+    
+    return [positiveArr, negativeArr]
+
 
 def classify(user_text):
     nlp.tokenizer = custom_tokenizer(nlp)
@@ -271,35 +373,129 @@ def classify(user_text):
     
     user_tokens_removed_Proper_Nouns = [x for x in user_tokens_filtered if x not in ppnString]
 
-    # remove genre from the tokens
-    genre = checkList(user_tokens_filtered,genreName,"Genre")
+    # 
+    conj = ["nor", "but", "yet", "except", "that"]
+    sentences = []
+
+    # Find index of conjunctions
+    conjIndex = []
+    current = 0
+    for tok in doc:
+        # If at the end, append the rest of the string
+        if tok.i == len(doc) -1:
+            conjIndex.append([current, tok.i])
+            break
+
+        if (tok.pos_ == "SCONJ" or tok.pos_ == "CCONJ"  or tok.pos_ == "PRON") and tok.text.lower() in conj:
+            conjIndex.append([current, tok.i -1])
+            current = tok.i
+
+    sentences = [doc[conjIndex[0]:conjIndex[-1]+1] for conjIndex in conjIndex]
+
+    # Remove genre from the tokens and check polarity
+    genre = checkList(user_text_tokenized,genreName,"Genre")
     if len(genre) > 0:
         for token in genre:
             filtered_ppn = list([word for word in filtered_ppn if token not in word])
+        genre = checkPolarity(genre, sentences)
+    else:
+        genre = [[],[]]
+
+    # Check polarity of language
+    og_lang = checkList(user_text_tokenized,languageName,"Language")
+    new_og_lang = [[],[]]
+    if len(og_lang) > 0:
+        for token in og_lang:
+            filtered_ppn = list([word for word in filtered_ppn if token not in word])
+        og_lang = checkPolarity(og_lang, sentences)  
+        
+        # Convert language from long form to short form
+        temp_og_lang = []
+        for arr in og_lang:
+            temp_arr = []
+            for key in arr:
+                temp_arr.append(getKeyFromValue(key))
+            temp_og_lang.append(temp_arr)
+        new_og_lang = temp_og_lang
     
+    # Remove production company keyword from the tokens and check polarity
     production_company = checkProductionCompanies(productionCompaniesName, filtered_ppn)
     if len(production_company) > 0:
         for token in production_company:
             filtered_ppn = list([word for word in filtered_ppn if token not in word])
+        production_company = checkPolarity(production_company, sentences)
+    else:
+        production_company = [[],[]]
+    
+    # Remove cast keyword from the tokens and check polarity
+    cast = checkCast(castNameSet, filtered_ppn)
+    if len(cast) > 0:
+        for token in cast:
+            filtered_ppn = list([word for word in filtered_ppn if token not in word])
+        cast = checkPolarity(cast, sentences)
+    else:
+        cast = [[],[]]
+
+    # Remove character keyword from the tokens and check polarity
+    character = checkCharacters(castCharactersSet, filtered_ppn)
+    if len(character) > 0:
+        for token in character:
+            filtered_ppn = list([word for word in filtered_ppn if token not in word])
+        character = checkPolarity(character, sentences)  
+    else:
+        character = [[],[]]
+
+    # Check polarity of release date
+    release_date, release_date_keyword = checkReleaseDate(user_text)
+    if len(release_date) > 0:
+        release_date_keyword = checkPolarity(release_date_keyword, sentences)  
+
+        if len(release_date_keyword[0]) > 0:
+            release_date = [release_date,[]]
+        else:
+            release_date = [[],release_date]
+    else:
+        release_date = [[],[]]
+    
+    # Check polarity of runtime
+    runtime, runtimeKeyword = checkRuntime(user_text)
+    if len(runtime) > 0:
+        runtimeKeyword = checkPolarity(runtimeKeyword, sentences) 
+
+        if len(runtimeKeyword[0]) > 0:
+            runtime = [runtime,[]]
+        else:
+            runtime = [[],runtime]
+    else:
+        runtime = [[],[]]
+
+    # Check polarity of age restriction
+    adult, adultKeyword= checkAgeRestriction(user_tokens_removed_Proper_Nouns)
+    if len(adult) > 0:
+        adultKeyword = checkPolarity(adultKeyword, sentences) 
+
+        if len(adultKeyword[0]) > 0:
+            adult = [adult,[]]
+        else:
+            adult = [[],adult]
+    else:
+        adult = [[],[]]
+    
     keywords = {
         'genre': genre, 
         'production_company': production_company, 
-        'cast': checkCast(castNameSet, filtered_ppn), 
-        'release_date': checkReleaseDate(user_text), 
-        'original_language': checkList(user_tokens_filtered,languageName,"Language"), 
-        'adult': checkList(user_tokens_removed_Proper_Nouns,ageRestrictionWords,"Age restriction"), 
-        'runtime': checkRuntime(user_text), 
-        'character': checkCharacters(castCharactersSet, filtered_ppn),
+        'cast': cast, 
+        'release_date': release_date, 
+        'original_language': new_og_lang, 
+        'runtime': runtime, 
+        'character': character,
+        "adult": adult,
         'unclassified': ""
         }
 
     # When sentence is unclassified, extract keywords from the sentence
-    if len(keywords["genre"]) == 0 and len(keywords["production_company"]) == 0 and len(keywords["cast"] ) == 0 and len(keywords["release_date"]) == 0 and len(keywords["original_language"]) == 0 and len(keywords["adult"]) == 0 and len(keywords["runtime"]) == 0 and len(keywords["character"] ) == 0:
+    if True:
         stopwords = nltk.corpus.stopwords.words('english')
-        # stopwords.remove("don")
-        # stopwords.remove("don't")
-        # stopwords.remove("do")
-        # stopwords.remove("not")
         new_stopwords=('movie', 'movies', 'film', 'films', 'want', 'would like', 'dont')
         stopwords.extend(new_stopwords)
 
@@ -347,9 +543,6 @@ with open(r"server/releaseDateWords.txt", "rb") as f:
     releaseDateWords = pickle.load(f)
 releaseDateWords = set(releaseDateWords)
 
-with open(r"server/languages.txt", "rb") as f:
-    languageName = pickle.load(f)
-languages = set(languageName)
 
 
 app = Flask(__name__)
