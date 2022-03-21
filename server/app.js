@@ -143,13 +143,13 @@ function showESResult(result, socket){
           result.guided_ans = ["I want a movie starring Tom Hanks", "I love Tom holland", "Any movie with Natalie Portman is good"];
         }else if(REQUIREMENTS[reqIndex] == "release_date"){
           result.bot_message = ["Do you have any preference on how old the movie is?", "Any preference on when the movie was released?"];
-          result.guided_ans = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie from the past year"];
+          result.guided_ans = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie released before 2009"];
         }else if(REQUIREMENTS[reqIndex] == "original_language"){
           result.bot_message = ["What would you like the language to be?", "Do you prefer a movie with a specific language?", "Any preference on the language of the movie?"];
           result.guided_ans = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
         }else if(REQUIREMENTS[reqIndex] == "runtime"){
           result.bot_message = ["How long do you want the movie to be?", "Any preference on the movie length?"];
-          result.guided_ans = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want a short movie"];
+          result.guided_ans = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want an 1hr 30min movie"];
         }
         else if(REQUIREMENTS[reqIndex] == "production_company"){
           result.bot_message = ["Any preference on a production company?", "Do you want to watch a movie from a particular production company?", "Any production companies you prefer?"];
@@ -175,7 +175,7 @@ function showESResult(result, socket){
         result.searchTokens.production_company = result.searchTokens.production_company.filter(item => !searchTokens.production_company.includes(item))
         result.searchTokens.cast = result.searchTokens.cast.filter(item => !searchTokens.cast.includes(item))
         result.searchTokens.character = result.searchTokens.character.filter(item => !searchTokens.character.includes(item))
-        result.searchTokens.release_date = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
+        result.searchTokens.release_date = result.searchTokens.release_date.filter(item => !searchTokens.release_date.includes(item))
         result.searchTokens.original_language = result.searchTokens.original_language.filter(item => !searchTokens.original_language.includes(item))
         result.searchTokens.adult = result.searchTokens.adult.filter(item => !searchTokens.adult.includes(item))
         result.searchTokens.runtime = result.searchTokens.runtime.filter(item => !searchTokens.runtime.includes(item))
