@@ -60,7 +60,7 @@ export default {
     padding-bottom: 15px;
     padding-top: 15px;
 }
-.title{
+div.title h1{
     text-align: center;
     font-size: 40px;
     color: #F6CD61;
