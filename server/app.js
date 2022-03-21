@@ -174,6 +174,7 @@ function showESResult(result, socket){
         result.searchTokens.genre = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
         result.searchTokens.production_company = result.searchTokens.production_company.filter(item => !searchTokens.production_company.includes(item))
         result.searchTokens.cast = result.searchTokens.cast.filter(item => !searchTokens.cast.includes(item))
+        result.searchTokens.character = result.searchTokens.character.filter(item => !searchTokens.character.includes(item))
         result.searchTokens.release_date = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
         result.searchTokens.original_language = result.searchTokens.original_language.filter(item => !searchTokens.original_language.includes(item))
         result.searchTokens.adult = result.searchTokens.adult.filter(item => !searchTokens.adult.includes(item))
@@ -231,7 +232,7 @@ function checkRequirements(data){
   data.requirements[2] = data.searchTokens.cast[0].length > 0 ? true: false || data.searchTokens.cast[1].length > 0 ? true: false;
   data.requirements[3] = data.searchTokens.release_date[0].length > 0 ? true: false || data.searchTokens.release_date[1].length > 0 ? true: false;
   data.requirements[4] = data.searchTokens.original_language[0].length > 0 ? true: false || data.searchTokens.original_language[1].length > 0 ? true: false;
-  data.requirements[5] = data.searchTokens.runtime[0].length > 0 ? true: false || data.searchTokens.runtime[0].length > 0 ? true: false;
+  data.requirements[5] = data.searchTokens.runtime[0].length > 0 ? true: false || data.searchTokens.runtime[1].length > 0 ? true: false;
   return data;
 }
 
@@ -243,14 +244,30 @@ function combineArray(data, newSearchTokens){
   data.searchTokens.production_company[1] = [...new Set([...data.searchTokens.production_company[1], ...newSearchTokens.production_company[1]])];
   data.searchTokens.cast[0] = [...new Set([...data.searchTokens.cast[0], ...newSearchTokens.cast[0]])];
   data.searchTokens.cast[1] = [...new Set([...data.searchTokens.cast[1], ...newSearchTokens.cast[1]])];
-  data.searchTokens.release_date[0] = [...new Set([...data.searchTokens.release_date[0], ...newSearchTokens.release_date[0]])];
-  data.searchTokens.release_date[1] = [...new Set([...data.searchTokens.release_date[1], ...newSearchTokens.release_date[1]])];
+  data.searchTokens.character[0] = [...new Set([...data.searchTokens.character[0], ...newSearchTokens.character[0]])];
+  data.searchTokens.character[1] = [...new Set([...data.searchTokens.character[1], ...newSearchTokens.character[1]])];
   data.searchTokens.original_language[0] = [...new Set([...data.searchTokens.original_language[0], ...newSearchTokens.original_language[0]])];
   data.searchTokens.original_language[1] = [...new Set([...data.searchTokens.original_language[1], ...newSearchTokens.original_language[1]])];
   data.searchTokens.adult[0] = [...new Set([...data.searchTokens.adult[0], ...newSearchTokens.adult[0]])];
   data.searchTokens.adult[1] = [...new Set([...data.searchTokens.adult[1], ...newSearchTokens.adult[1]])];
-  data.searchTokens.runtime[0] = [...new Set([...data.searchTokens.runtime[0], ...newSearchTokens.runtime[0]])];
-  data.searchTokens.runtime[1] = [...new Set([...data.searchTokens.runtime[1], ...newSearchTokens.runtime[1]])];
+  if(newSearchTokens.release_date[0].length > 0){
+    data.searchTokens.release_date[0].push(newSearchTokens.release_date[0]);
+    data.searchTokens.release_date[0] = [...new Set(data.searchTokens.release_date[0])]
+  }
+  if(newSearchTokens.release_date[1].length > 0){
+    data.searchTokens.release_date[1].push(newSearchTokens.release_date[1]);
+    data.searchTokens.release_date[1] = [...new Set(data.searchTokens.release_date[1])]
+  }
+  if(newSearchTokens.runtime[0].length > 0){
+    data.searchTokens.runtime[0].push(newSearchTokens.runtime[0]);
+    data.searchTokens.runtime[0] = [...new Set(data.searchTokens.runtime[0])]
+  }
+  if(newSearchTokens.runtime[1].length > 0){
+    data.searchTokens.runtime[1].push(newSearchTokens.runtime[1]);
+    data.searchTokens.runtime[1] = [...new Set(data.searchTokens.runtime[1])]
+  }
+  console.log("runtime")
+  console.log(data.searchTokens.runtime[0])
   data.searchTokens.unclassified = newSearchTokens.unclassified == "" ? data.searchTokens.unclassified : data.searchTokens.unclassified + " " + newSearchTokens.unclassified;
   return data;
 }

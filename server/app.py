@@ -185,17 +185,13 @@ def checkRuntime(user_text):
                 type = "lte"
             break
     
-    generalRegex = "\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr|\d+min|\d+\smin|\d+m"
+    generalRegex = "\d+:\d+|\d+hrs|\d+hr|\d+\shours|\d+\shrs|\d+hours|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr|\d+mins|\d+\smins|\d+min|\d+\smin|\d+m|\d+\sm"
     generalRequest = re.findall(generalRegex,user_text)
     
-    if generalRequest:
-        timeFrame = re.findall("[-+]?(?:\d*\.\d+|\d+)",generalRequest[0])
-        date = parse(timeFrame[0])
-
     #timeMention1 = re.findall("\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+min|\d+\smin|\d+m",user_text)
     hrMinAmount = re.findall("\d+:\d+",user_text)
     hrAmount = re.findall("\d+hr|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr",user_text)
-    minAmount = re.findall("\d+min|\d+\smin|\d+m",user_text)
+    minAmount = re.findall("\d+min|\d+\smin|\d+m|\d+\sm",user_text)
     if hrAmount:
         hrs = re.findall("[-+]?(?:\d*\.\d+|\d+)",hrAmount[0])
         finalMins += int(float(hrs[0])*60.0)
@@ -222,7 +218,7 @@ def checkRuntime(user_text):
 # if words like old return ["lte", "2005-01-01"] by default
 # if words like new return ["gte", "2015-01-01"]
 def checkReleaseDate(user_text):
-    requestType = ["in the last", "in the year","in the past", "in this", "made in", "released in", "released later" "released after", "released before" "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after", "from"]
+    requestType = ["in the last", "in the year","in the past", "in this", "made in", "released in", "released later", "released after", "released before", "from the", "created in", "older than", "from before", "made before", "created before", "newer than", "made after", "created after", "from"]
     type ="eq"
     yr = 0
     mn = 0
@@ -233,9 +229,9 @@ def checkReleaseDate(user_text):
     
     for z in requestType:
         if z in user_text:
-            if z in ["last" + "newer than", "made after","created after", "released later", "past"]:
+            if z in ["last" + "newer than", "made after","created after", "released later", "past", "released after"]:
                 type = "gte"
-            elif z in ["older than", "from before", "made before","created before"]:
+            elif z in ["older than", "from before", "made before","created before", "released before"]:
                 type = "lte"
 
     try:
@@ -306,13 +302,14 @@ def checkPolarityGivenKeyword(sentences, keyword):
     if len(sentence) > 0:
          # Check sentence if it contains a negative word
         for tok in sentence:
-            if tok.dep_ == 'neg' or tok.text.lower() in negative_words:
+            print(tok, file=sys.stderr)
+            print(tok.dep_, file=sys.stderr)
+            if tok.dep_ == 'neg' or tok.text.lower() in negative_words or (tok.dep_ == 'aux' and tok.text.lower() == "nt"):
                 return False
-        
+
         # Check if sentence has a CCONj/SCONJ
         for tok in sentence:
-            
-            if (tok.pos_ == "SCONJ" or tok.pos_ == "CCONJ") or tok.text.lower() in conj:
+            if (tok.pos_ == "SCONJ" or tok.pos_ == "CCONJ") and tok.text.lower() in conj:
                 pos = False
 
                 # Find index of current sentence to check previous sentence for its polarity
@@ -335,7 +332,7 @@ def checkPolarity(keywords, sentences, ppn, filter):
         # Match written keywords with proper nouns ex. Marvel -> Marvel studios
         for token in keywords:
             filtered_keywords = [word for word in ppn if word in token]
-        
+
         for token in filtered_keywords:
             # Check polarity of the token
             if checkPolarityGivenKeyword(sentences, token):
@@ -369,7 +366,7 @@ def classify(user_text):
     new_stopwords=('movie', 'movies', 'film', 'films')
     stopwords.extend(new_stopwords)
     true_case = truecase.get_true_case(user_text)
-    user_tokens_filtered = set([word for word in user_text_tokenized if not word in stopwords])
+    user_tokens_filtered = set([word for word in user_text_tokenized if not word.lower() in stopwords])
 
     doc = nlp(true_case)
     ppn = extract_proper_nouns(doc)
@@ -380,14 +377,14 @@ def classify(user_text):
     filtered_ppn =[]
     for token in ppn:
         arr = token.text.split()
-        filtered_ppn.append(" ".join([word for word in arr if not word in stopwords]))
+        filtered_ppn.append(" ".join([word for word in arr if word.lower() not in stopwords]))
 
     filtered_ppn = [x.lower().strip()for x in filtered_ppn]
     filtered_ppn = [i for i in filtered_ppn if i]
     print(filtered_ppn, file=sys.stderr)
                 
     
-    user_tokens_removed_Proper_Nouns = [x for x in user_tokens_filtered if x not in ppnString]
+    user_tokens_removed_Proper_Nouns = [x for x in user_tokens_filtered if x.lower() not in ppnString]
 
     # 
     conj = ["nor", "but", "yet", "except", "that"]
@@ -427,18 +424,6 @@ def classify(user_text):
             temp_og_lang.append(temp_arr)
         new_og_lang = temp_og_lang
     
-    # Remove production company keyword from the tokens and check polarity
-    production_company = checkProductionCompanies(productionCompaniesName, filtered_ppn)
-    production_company, filtered_ppn = checkPolarity(production_company, sentences, filtered_ppn, True)
-    
-    # Remove cast keyword from the tokens and check polarity
-    cast = checkCast(castNameSet, filtered_ppn)
-    cast, filtered_ppn = checkPolarity(cast, sentences, filtered_ppn, True)
-
-    # Remove character keyword from the tokens and check polarity
-    character = checkCharacters(castCharactersSet, filtered_ppn)
-    character, filtered_ppn = checkPolarity(character, sentences, filtered_ppn, True)
-
     # Check polarity of release date
     release_date, release_date_keyword = checkReleaseDate(user_text)
     release_date_keyword, filtered_ppn = checkPolarity(release_date_keyword, sentences, filtered_ppn, True)
@@ -455,6 +440,18 @@ def classify(user_text):
         runtime = [runtime,[]]
     else:
         runtime = [[],runtime]
+    
+    # Remove production company keyword from the tokens and check polarity
+    production_company = checkProductionCompanies(productionCompaniesName, filtered_ppn)
+    production_company, filtered_ppn = checkPolarity(production_company, sentences, filtered_ppn, True)
+    
+    # Remove cast keyword from the tokens and check polarity
+    cast = checkCast(castNameSet, filtered_ppn)
+    cast, filtered_ppn = checkPolarity(cast, sentences, filtered_ppn, True)
+
+    # Remove character keyword from the tokens and check polarity
+    character = checkCharacters(castCharactersSet, filtered_ppn)
+    character, filtered_ppn = checkPolarity(character, sentences, filtered_ppn, True)
 
     # Check polarity of age restriction
     adult, adultKeyword= checkAgeRestriction(user_tokens_removed_Proper_Nouns)
