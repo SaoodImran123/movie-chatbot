@@ -174,14 +174,14 @@ def checkCharacters(characterSet, ppn):
     return character
 
 def checkRuntime(user_text):
-    requestType = ["less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal"]
+    requestType = ["less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal", "longer than", "shorter than"]
     type ="eq"
     finalMins = 0
     for z in requestType:
         if z in user_text:
-            if z in ["greater than", "longer", "more", "long"]:
+            if z in ["greater than", "longer", "more", "long", "longer than"]:
                 type = "gte"
-            elif z in ["less than","shorter", "no more","short"]:
+            elif z in ["less than","shorter", "no more","short", "shorter than"]:
                 type = "lte"
             break
     
@@ -189,7 +189,6 @@ def checkRuntime(user_text):
     generalRequest = re.findall(generalRegex,user_text)
     
     if generalRequest:
-        print(generalRequest,file=sys.stderr)
         timeFrame = re.findall("[-+]?(?:\d*\.\d+|\d+)",generalRequest[0])
         date = parse(timeFrame[0])
 
@@ -223,7 +222,7 @@ def checkRuntime(user_text):
 # if words like old return ["lte", "2005-01-01"] by default
 # if words like new return ["gte", "2015-01-01"]
 def checkReleaseDate(user_text):
-    requestType = ["in the last", "in the year","in the past", "in this", "made in", "released in", "released later" "released after", "released before" "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after"]
+    requestType = ["in the last", "in the year","in the past", "in this", "made in", "released in", "released later" "released after", "released before" "from the", "created in", "older than", "from before", "made before", "created before" "newer than", "made after", "created after", "from"]
     type ="eq"
     yr = 0
     mn = 0
@@ -234,8 +233,6 @@ def checkReleaseDate(user_text):
     
     for z in requestType:
         if z in user_text:
-            # user_text = user_text[user_text.index(z): len(user_text)]
-            # print(user_text,file=sys.stderr)
             if z in ["last" + "newer than", "made after","created after", "released later", "past"]:
                 type = "gte"
             elif z in ["older than", "from before", "made before","created before"]:
@@ -249,7 +246,6 @@ def checkReleaseDate(user_text):
             generalRequest = re.findall(generalRegex,user_text)
             
             if generalRequest:
-                print(generalRequest,file=sys.stderr)
                 timeFrame = re.findall("[-+]?(?:\d*\.\d+|\d+)",generalRequest[0])
                 date = parse(timeFrame[0])
                 break
@@ -301,7 +297,7 @@ def checkPolarityGivenKeyword(sentences, keyword):
     prev_sentence = []
     filtered_keyword = keyword.replace('-', ' ', 1).lower()
     pos = True
-    print(keyword,file=sys.stderr)
+
     # find list with the keyword
     for substr in sentences:
         if keyword.lower() in substr.text.lower() or filtered_keyword in substr.text.lower():
@@ -328,21 +324,41 @@ def checkPolarityGivenKeyword(sentences, keyword):
                 for token in prev_sentence:
                     if token.dep_ == 'neg' or token.text.lower() in negative_words:
                         pos = True
-    print(pos,file=sys.stderr)
+
     return pos
 
-
-def checkPolarity(keywords, sentences):
+# Assigns keyword to the proper polarity list and filter the total ppn
+def checkPolarity(keywords, sentences, ppn, filter):
     positiveArr = []
     negativeArr = []
-    for token in keywords:
-        # Check polarity of the token
-        if checkPolarityGivenKeyword(sentences, token):
-            positiveArr.append(token)
-        else:
-            negativeArr.append(token)
-    
-    return [positiveArr, negativeArr]
+    if len(keywords) > 0 and "encanto enterprises" not in keywords:
+        # Match written keywords with proper nouns ex. Marvel -> Marvel studios
+        for token in keywords:
+            filtered_keywords = [word for word in ppn if word in token]
+        
+        for token in filtered_keywords:
+            # Check polarity of the token
+            if checkPolarityGivenKeyword(sentences, token):
+                positiveArr.append(token)
+            else:
+                negativeArr.append(token)
+        
+        # Switch back to proper noun
+        for token in positiveArr:
+            positiveArr = [word for word in keywords if token in word]
+
+        for token in negativeArr:
+            negativeArr = [word for word in keywords if token in word]
+
+        # Filter from keyword list
+        if filter:
+            combined_keywords = filtered_keywords + keywords
+            for token in combined_keywords:
+                ppn = list([word for word in ppn if token not in word])
+
+        return [positiveArr, negativeArr], ppn
+    else:
+        return [[],[]], ppn
 
 
 def classify(user_text):
@@ -394,22 +410,15 @@ def classify(user_text):
 
     # Remove genre from the tokens and check polarity
     genre = checkList(user_text_tokenized,genreName,"Genre")
-    if len(genre) > 0:
-        for token in genre:
-            filtered_ppn = list([word for word in filtered_ppn if token not in word])
-        genre = checkPolarity(genre, sentences)
-    else:
-        genre = [[],[]]
+    genre, filtered_ppn = checkPolarity(genre, sentences, filtered_ppn, True)
 
     # Check polarity of language
     og_lang = checkList(user_text_tokenized,languageName,"Language")
+    og_lang, filtered_ppn = checkPolarity(og_lang, sentences, filtered_ppn, True)
     new_og_lang = [[],[]]
-    if len(og_lang) > 0:
-        for token in og_lang:
-            filtered_ppn = list([word for word in filtered_ppn if token not in word])
-        og_lang = checkPolarity(og_lang, sentences)  
-        
-        # Convert language from long form to short form
+
+    # Convert language from long from to short form
+    if len(og_lang[0]) > 0 or len(og_lang[1]) > 0:
         temp_og_lang = []
         for arr in og_lang:
             temp_arr = []
@@ -420,66 +429,40 @@ def classify(user_text):
     
     # Remove production company keyword from the tokens and check polarity
     production_company = checkProductionCompanies(productionCompaniesName, filtered_ppn)
-    if len(production_company) > 0:
-        for token in production_company:
-            filtered_ppn = list([word for word in filtered_ppn if token not in word])
-        production_company = checkPolarity(production_company, sentences)
-    else:
-        production_company = [[],[]]
+    production_company, filtered_ppn = checkPolarity(production_company, sentences, filtered_ppn, True)
     
     # Remove cast keyword from the tokens and check polarity
     cast = checkCast(castNameSet, filtered_ppn)
-    if len(cast) > 0:
-        for token in cast:
-            filtered_ppn = list([word for word in filtered_ppn if token not in word])
-        cast = checkPolarity(cast, sentences)
-    else:
-        cast = [[],[]]
+    cast, filtered_ppn = checkPolarity(cast, sentences, filtered_ppn, True)
 
     # Remove character keyword from the tokens and check polarity
     character = checkCharacters(castCharactersSet, filtered_ppn)
-    if len(character) > 0:
-        for token in character:
-            filtered_ppn = list([word for word in filtered_ppn if token not in word])
-        character = checkPolarity(character, sentences)  
-    else:
-        character = [[],[]]
+    character, filtered_ppn = checkPolarity(character, sentences, filtered_ppn, True)
 
     # Check polarity of release date
     release_date, release_date_keyword = checkReleaseDate(user_text)
-    if len(release_date) > 0:
-        release_date_keyword = checkPolarity(release_date_keyword, sentences)  
+    release_date_keyword, filtered_ppn = checkPolarity(release_date_keyword, sentences, filtered_ppn, True)
 
-        if len(release_date_keyword[0]) > 0:
-            release_date = [release_date,[]]
-        else:
-            release_date = [[],release_date]
+    if len(release_date_keyword[0]) > 0:
+        release_date = [release_date,[]]
     else:
-        release_date = [[],[]]
+        release_date = [[],release_date]
     
     # Check polarity of runtime
     runtime, runtimeKeyword = checkRuntime(user_text)
-    if len(runtime) > 0:
-        runtimeKeyword = checkPolarity(runtimeKeyword, sentences) 
-
-        if len(runtimeKeyword[0]) > 0:
-            runtime = [runtime,[]]
-        else:
-            runtime = [[],runtime]
+    runtimeKeyword, filtered_ppn = checkPolarity(runtimeKeyword, sentences, filtered_ppn, True)
+    if len(runtimeKeyword[0]) > 0:
+        runtime = [runtime,[]]
     else:
-        runtime = [[],[]]
+        runtime = [[],runtime]
 
     # Check polarity of age restriction
     adult, adultKeyword= checkAgeRestriction(user_tokens_removed_Proper_Nouns)
-    if len(adult) > 0:
-        adultKeyword = checkPolarity(adultKeyword, sentences) 
-
-        if len(adultKeyword[0]) > 0:
-            adult = [adult,[]]
-        else:
-            adult = [[],adult]
+    adultKeyword, filtered_ppn = checkPolarity(adultKeyword, sentences, filtered_ppn, False)
+    if len(adultKeyword[0]) > 0:
+        adult = [adult,[]]
     else:
-        adult = [[],[]]
+        adult = [[],adult]
     
     keywords = {
         'genre': genre, 
@@ -494,25 +477,25 @@ def classify(user_text):
         }
 
     # When sentence is unclassified, extract keywords from the sentence
-    if True:
-        stopwords = nltk.corpus.stopwords.words('english')
-        new_stopwords=('movie', 'movies', 'film', 'films', 'want', 'would like', 'dont')
-        stopwords.extend(new_stopwords)
+    stopwords = nltk.corpus.stopwords.words('english')
+    new_stopwords=('movie', 'movies', 'film', 'films', 'want', 'would like', 'dont')
+    stopwords.extend(new_stopwords)
 
-        r = Rake(stopwords=stopwords)
+    r = Rake(stopwords=stopwords)
 
-        # Extraction given the text.
-        r.extract_keywords_from_text(user_text)
+    # Extraction given the text.
+    r.extract_keywords_from_text(" ".join(filtered_ppn))
 
-        # To get keyword phrases ranked highest to lowest with scores.
-        result = r.get_ranked_phrases()
-        filtered_result = []
-        for token in result:
-            # check for nonsense
-            if not Detector.is_gibberish(token):
-                filtered_result.append(token)
-        
-        keywords["unclassified"] = ' '.join(filtered_result)
+    # To get keyword phrases ranked highest to lowest with scores.
+    result = r.get_ranked_phrases()
+    filtered_result = []
+    for token in result:
+        # check for nonsense
+        if not Detector.is_gibberish(token):
+            filtered_result.append(token)
+    
+    keywords["unclassified"] = ' '.join(filtered_result)
+
     return(keywords)
 
 with open(r"server/cast.txt", "rb") as f:

@@ -142,7 +142,7 @@ function showESResult(result, socket){
           result.bot_message = ["Any preference on any actors or actresses?", "Do you want to watch any particular actor or actress?", "Any actors or actress you like watching?"];
           result.guided_ans = ["I want a movie starring Tom Hanks", "I love Tom holland", "Any movie with Natalie Portman is good"];
         }else if(REQUIREMENTS[reqIndex] == "release_date"){
-          result.bot_message = ["Do you have any preference on how old the movie is?", "Any preference on when the movie was released?", "something else"];
+          result.bot_message = ["Do you have any preference on how old the movie is?", "Any preference on when the movie was released?"];
           result.guided_ans = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie from the past year"];
         }else if(REQUIREMENTS[reqIndex] == "original_language"){
           result.bot_message = ["What would you like the language to be?", "Do you prefer a movie with a specific language?", "Any preference on the language of the movie?"];
@@ -169,22 +169,46 @@ function showESResult(result, socket){
       }
     }else{
       request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":result.message} }, (err, res, searchTokens) => {
-          if (err) { return console.log(err); }
-          // Remove token from 
-          result.searchTokens.genre = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
-          result.searchTokens.production_company = result.searchTokens.production_company.filter(item => !searchTokens.production_company.includes(item))
-          result.searchTokens.cast = result.searchTokens.cast.filter(item => !searchTokens.cast.includes(item))
-          result.searchTokens.release_date = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
-          result.searchTokens.original_language = result.searchTokens.original_language.filter(item => !searchTokens.original_language.includes(item))
-          result.searchTokens.adult = result.searchTokens.adult.filter(item => !searchTokens.adult.includes(item))
-          result.searchTokens.runtime = result.searchTokens.runtime.filter(item => !searchTokens.runtime.includes(item))
-          result.searchTokens.unclassified =  result.searchTokens.unclassified == "" ?  result.searchTokens.unclassified : result.searchTokens.unclassified.replace(searchTokens.unclassified, "");
-          console.log("After removal")
-          console.log(result)
+        if (err) { return console.log(err); }
+        // Remove token from 
+        result.searchTokens.genre = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
+        result.searchTokens.production_company = result.searchTokens.production_company.filter(item => !searchTokens.production_company.includes(item))
+        result.searchTokens.cast = result.searchTokens.cast.filter(item => !searchTokens.cast.includes(item))
+        result.searchTokens.release_date = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
+        result.searchTokens.original_language = result.searchTokens.original_language.filter(item => !searchTokens.original_language.includes(item))
+        result.searchTokens.adult = result.searchTokens.adult.filter(item => !searchTokens.adult.includes(item))
+        result.searchTokens.runtime = result.searchTokens.runtime.filter(item => !searchTokens.runtime.includes(item))
+        result.searchTokens.unclassified =  result.searchTokens.unclassified == "" ?  result.searchTokens.unclassified : result.searchTokens.unclassified.replace(searchTokens.unclassified, "");
+        console.log("After removal")
+        console.log(result)
+        if (result.response.length == 0){
           result.bot_message =  ["Sorry! I can't understand you. Try one of these options", "Sorry! I don't understand. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
-          result.guided_ans = ["I want action movies", "I would like a movie longer than 2 hours", "I want a Pixar movie"];
+        }else{
+          result.bot_message =  ["Sorry! I didn't find a match for your search. Try one of these options", "I didn't find a match for this search. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
+        }
 
-          result.bot_message = result.bot_message[Math.floor(Math.random()*result.bot_message.length)];
+        // Choose a response
+        let findMissingReqIndex = (element) => element == false;
+        let reqIndex = result.requirements.findIndex(findMissingReqIndex);
+
+        // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
+        if (REQUIREMENTS[reqIndex] == "genre"){
+          result.guided_ans = ["I want action movies", "I want comedy movies", "I want romance movies"];
+        }else if(REQUIREMENTS[reqIndex] == "cast"){
+          result.guided_ans = ["I want a movie starring Tom Hanks", "I love Tom holland", "Any movie with Natalie Portman is good"];
+        }else if(REQUIREMENTS[reqIndex] == "release_date"){
+          result.guided_ans = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie from the past year"];
+        }else if(REQUIREMENTS[reqIndex] == "original_language"){
+          result.guided_ans = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
+        }else if(REQUIREMENTS[reqIndex] == "runtime"){
+          result.guided_ans = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want a short movie"];
+        }
+        else if(REQUIREMENTS[reqIndex] == "production_company"){
+          result.guided_ans = ["I want a movie produced by Marvel Studios", "I want a movie produced by Lionsgate", "I want a Pixar movie"];
+        }
+
+
+        result.bot_message = result.bot_message[Math.floor(Math.random()*result.bot_message.length)];
 
           // remove message from result to avoid duplicate messages
           delete result.message;
