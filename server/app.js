@@ -179,7 +179,7 @@ function showESResult(result, socket){
         result.searchTokens.original_language = result.searchTokens.original_language.filter(item => !searchTokens.original_language.includes(item))
         result.searchTokens.adult = result.searchTokens.adult.filter(item => !searchTokens.adult.includes(item))
         result.searchTokens.runtime = result.searchTokens.runtime.filter(item => !searchTokens.runtime.includes(item))
-        result.searchTokens.unclassified =  result.searchTokens.unclassified == "" ?  result.searchTokens.unclassified : result.searchTokens.unclassified.replace(searchTokens.unclassified, "");
+        result.searchTokens.unclassified = result.searchTokens.unclassified.filter(item => !searchTokens.unclassified.includes(item))
         console.log("After removal")
         console.log(result)
         if (result.response.length == 0){
