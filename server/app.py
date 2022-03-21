@@ -302,8 +302,6 @@ def checkPolarityGivenKeyword(sentences, keyword):
     if len(sentence) > 0:
          # Check sentence if it contains a negative word
         for tok in sentence:
-            print(tok, file=sys.stderr)
-            print(tok.dep_, file=sys.stderr)
             if tok.dep_ == 'neg' or tok.text.lower() in negative_words or (tok.dep_ == 'aux' and tok.text.lower() == "nt"):
                 return False
 
@@ -328,24 +326,34 @@ def checkPolarityGivenKeyword(sentences, keyword):
 def checkPolarity(keywords, sentences, ppn, filter):
     positiveArr = []
     negativeArr = []
+    temp_positiveArr = []
+    temp_negativeArr = []
+    filtered_keywords = []
     if len(keywords) > 0 and "encanto enterprises" not in keywords:
         # Match written keywords with proper nouns ex. Marvel -> Marvel studios
         for token in keywords:
-            filtered_keywords = [word for word in ppn if word in token]
+            for word in ppn:
+                if word in token:
+                    filtered_keywords.append(word)
 
         for token in filtered_keywords:
             # Check polarity of the token
             if checkPolarityGivenKeyword(sentences, token):
-                positiveArr.append(token)
+                temp_positiveArr.append(token)
             else:
-                negativeArr.append(token)
+                temp_negativeArr.append(token)
         
         # Switch back to proper noun
-        for token in positiveArr:
-            positiveArr = [word for word in keywords if token in word]
+        for token in temp_positiveArr:
+            for word in keywords:
+                if token in word:
+                    positiveArr.append(word)
 
-        for token in negativeArr:
-            negativeArr = [word for word in keywords if token in word]
+        for token in temp_negativeArr:
+            for word in keywords:
+                if token in word:
+                    negativeArr.append(word)
+
 
         # Filter from keyword list
         if filter:
@@ -474,24 +482,21 @@ def classify(user_text):
         }
 
     # When sentence is unclassified, extract keywords from the sentence
-    stopwords = nltk.corpus.stopwords.words('english')
-    new_stopwords=('movie', 'movies', 'film', 'films', 'want', 'would like', 'dont')
-    stopwords.extend(new_stopwords)
+    result, filtered_ppn = checkPolarity(filtered_ppn, sentences, filtered_ppn, False)
+    positive_result = []
+    negative_result = []
 
-    r = Rake(stopwords=stopwords)
-
-    # Extraction given the text.
-    r.extract_keywords_from_text(" ".join(filtered_ppn))
-
-    # To get keyword phrases ranked highest to lowest with scores.
-    result = r.get_ranked_phrases()
-    filtered_result = []
-    for token in result:
+    for token in result[0]:
         # check for nonsense
         if not Detector.is_gibberish(token):
-            filtered_result.append(token)
+            positive_result.append(token)
     
-    keywords["unclassified"] = ' '.join(filtered_result)
+    for token in result[1]:
+        # check for nonsense
+        if not Detector.is_gibberish(token):
+            negative_result.append(token)
+    
+    keywords["unclassified"] = [list(filter(None, [" ".join(positive_result)])), list(filter(None, [" ".join(negative_result)]))]
 
     return(keywords)
 

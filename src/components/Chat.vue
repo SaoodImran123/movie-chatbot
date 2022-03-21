@@ -88,7 +88,7 @@ export default {
             time: '',
             createdTime: '',
             socket : io('ws://'+window.location.hostname+':3050'),
-            searchTokens: {genre: [[],[]], production_company: [[],[]], cast:[[],[]], character:[[],[]], release_date: [[],[]], original_language: [[],[]], adult: [[],[]], runtime:[[],[]], unclassified: ""},
+            searchTokens: {genre: [[],[]], production_company: [[],[]], cast:[[],[]], character:[[],[]], release_date: [[],[]], original_language: [[],[]], adult: [[],[]], runtime:[[],[]], unclassified: [[],[]]},
             response: [],
             requirements: [],
             loading:false

@@ -266,9 +266,8 @@ function combineArray(data, newSearchTokens){
     data.searchTokens.runtime[1].push(newSearchTokens.runtime[1]);
     data.searchTokens.runtime[1] = [...new Set(data.searchTokens.runtime[1])]
   }
-  console.log("runtime")
-  console.log(data.searchTokens.runtime[0])
-  data.searchTokens.unclassified = newSearchTokens.unclassified == "" ? data.searchTokens.unclassified : data.searchTokens.unclassified + " " + newSearchTokens.unclassified;
+  data.searchTokens.unclassified[0] = [...new Set([...data.searchTokens.unclassified[0], ...newSearchTokens.unclassified[0]])];
+  data.searchTokens.unclassified[1] = [...new Set([...data.searchTokens.unclassified[1], ...newSearchTokens.unclassified[1]])];
   return data;
 }
 
