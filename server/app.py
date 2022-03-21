@@ -331,10 +331,10 @@ def checkPolarity(keywords, sentences, ppn, filter):
     filtered_keywords = []
     if len(keywords) > 0 and "encanto enterprises" not in keywords:
         # Match written keywords with proper nouns ex. Marvel -> Marvel studios
-        for token in keywords:
-            for word in ppn:
+        for word in ppn:
+            for token in keywords:
                 if word in token:
-                    filtered_keywords.append(word)
+                    filtered_keywords.append(token)
 
         for token in filtered_keywords:
             # Check polarity of the token
