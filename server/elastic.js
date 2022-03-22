@@ -91,7 +91,7 @@ module.exports = {
             if(data.searchTokens.genre[0].length > 0){
                 var genres = data.searchTokens.genre[0];
                 for (let i = 0; i < genres.length; i++){
-                    if (i > 0){
+                    if (i > 1){
                         should.push({"term": {"genres.name": genres[i]}});
                     }else{
                         must.push({"term": {"genres.name": genres[i]}});
@@ -177,18 +177,18 @@ module.exports = {
                 for (var i = 0; i < data.searchTokens.release_date[0].length; i++){
                     var release_date = data.searchTokens.release_date[0];
                     for (let i = 0; i < release_date.length; i++){
-                        if (i > 0){
-                            if(release_date[i][0] == "eq"){
-                                // Range between the given date (current year to next year)
-                                var nextYr = new Date(release_date[i][1]);
-                                nextYr.setFullYear(nextYr.getFullYear() + 1);
-                                nextYr = nextYr.toISOString().substring(0 , 10)
-                                should.push({range: {"release_date": {"gte": release_date[i][1]}}});
-                                should.push({range: {"release_date": {"lte": nextYr}}});
-                            }else{
-                                should.push({range: {"release_date": {[release_date[i][0]]: release_date[i][1]}}});
-                            }
-                        } else{
+                        // if (i > 0){
+                        //     if(release_date[i][0] == "eq"){
+                        //         // Range between the given date (current year to next year)
+                        //         var nextYr = new Date(release_date[i][1]);
+                        //         nextYr.setFullYear(nextYr.getFullYear() + 1);
+                        //         nextYr = nextYr.toISOString().substring(0 , 10)
+                        //         should.push({range: {"release_date": {"gte": release_date[i][1]}}});
+                        //         should.push({range: {"release_date": {"lte": nextYr}}});
+                        //     }else{
+                        //         should.push({range: {"release_date": {[release_date[i][0]]: release_date[i][1]}}});
+                        //     }
+                        // } else{
                             if(release_date[i][0] == "eq"){
                                 // Range between the given date
                                 console.log("ES release date")
@@ -201,7 +201,7 @@ module.exports = {
                             }else{
                                 must.push({range: {"release_date": {[release_date[i][0]]: release_date[i][1]}}});
                             }
-                        }
+                        // }
 
                     }
                 }

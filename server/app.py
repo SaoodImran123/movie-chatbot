@@ -447,19 +447,24 @@ def classify(user_text):
     # Check polarity of release date
     release_date, release_date_keyword = checkReleaseDate(user_text)
     release_date_keyword, filtered_ppn = checkPolarity(release_date_keyword, sentences, filtered_ppn, True)
-
+    print(release_date,file=sys.stderr)
     if len(release_date_keyword[0]) > 0:
-        release_date = [release_date,[]]
+        release_date = [[release_date],[]]
+    elif len(release_date_keyword[1]) > 0:
+        release_date = [[],[release_date]]
     else:
-        release_date = [[],release_date]
+        release_date = [[],[]]
     
     # Check polarity of runtime
     runtime, runtimeKeyword = checkRuntime(user_text)
     runtimeKeyword, filtered_ppn = checkPolarity(runtimeKeyword, sentences, filtered_ppn, True)
+    print(runtime,file=sys.stderr)
     if len(runtimeKeyword[0]) > 0:
-        runtime = [runtime,[]]
+        runtime = [[runtime],[]]
+    elif len(runtimeKeyword[1]) > 0:
+        runtime = [[],[runtime]]
     else:
-        runtime = [[],runtime]
+        runtime = [[],[]]
     
     # Remove cast keyword from the tokens and check polarity
     cast = checkCast(castNameSet, filtered_ppn)
@@ -478,8 +483,10 @@ def classify(user_text):
     adultKeyword, filtered_ppn = checkPolarity(adultKeyword, sentences, filtered_ppn, False)
     if len(adultKeyword[0]) > 0:
         adult = [adult,[]]
+    elif len(adultKeyword[1]) > 0:
+        adult = [[],[adult]]
     else:
-        adult = [[],adult]
+        adult = [[],[]]
     
     keywords = {
         'genre': genre, 

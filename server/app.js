@@ -178,17 +178,9 @@ function showESResult(result, socket){
           result.bot_message =  ["Sorry! I didn't find a match for your search. Try one of these options", "I didn't find a match for this search. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
         }
         // Remove token from query
-        result.searchTokens.genre = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
-        result.searchTokens.production_company = result.searchTokens.production_company.filter(item => !searchTokens.production_company.includes(item))
-        result.searchTokens.cast = result.searchTokens.cast.filter(item => !searchTokens.cast.includes(item))
-        result.searchTokens.character = result.searchTokens.character.filter(item => !searchTokens.character.includes(item))
-        result.searchTokens.release_date = result.searchTokens.release_date.filter(item => !searchTokens.release_date.includes(item))
-        result.searchTokens.original_language = result.searchTokens.original_language.filter(item => !searchTokens.original_language.includes(item))
-        result.searchTokens.adult = result.searchTokens.adult.filter(item => !searchTokens.adult.includes(item))
-        result.searchTokens.runtime = result.searchTokens.runtime.filter(item => !searchTokens.runtime.includes(item))
-        result.searchTokens.unclassified = result.searchTokens.unclassified.filter(item => !searchTokens.unclassified.includes(item))
         console.log("After removal")
-        console.log(result)
+        console.log(searchTokens)
+        result = removeOldTokens(result, searchTokens);
 
         // Choose a response
         let findMissingReqIndex = (element) => element == false;
@@ -200,11 +192,11 @@ function showESResult(result, socket){
         }else if(REQUIREMENTS[reqIndex] == "cast"){
           result.guided_ans = ["I want a movie starring Tom Hanks", "I love Tom holland", "Any movie with Natalie Portman is good"];
         }else if(REQUIREMENTS[reqIndex] == "release_date"){
-          result.guided_ans = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie from the past year"];
+          result.guided_ans = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie in 2020"];
         }else if(REQUIREMENTS[reqIndex] == "original_language"){
           result.guided_ans = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
         }else if(REQUIREMENTS[reqIndex] == "runtime"){
-          result.guided_ans = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want a short movie"];
+          result.guided_ans = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want an 1hr 30min movie"];
         }
         else if(REQUIREMENTS[reqIndex] == "production_company"){
           result.guided_ans = ["I want a movie produced by Marvel Studios", "I want a movie produced by Lionsgate", "I want a Pixar movie"];
@@ -252,25 +244,92 @@ function combineArray(data, newSearchTokens){
   data.searchTokens.original_language[1] = [...new Set([...data.searchTokens.original_language[1], ...newSearchTokens.original_language[1]])];
   data.searchTokens.adult[0] = [...new Set([...data.searchTokens.adult[0], ...newSearchTokens.adult[0]])];
   data.searchTokens.adult[1] = [...new Set([...data.searchTokens.adult[1], ...newSearchTokens.adult[1]])];
+
   if(newSearchTokens.release_date[0].length > 0){
-    data.searchTokens.release_date[0].push(newSearchTokens.release_date[0]);
+    for (let i = 0; i < newSearchTokens.release_date[0].length; i++){
+      data.searchTokens.release_date[0].push(newSearchTokens.release_date[0][i]);
+    }
+    // Remove duplicates
     data.searchTokens.release_date[0] = [...new Set(data.searchTokens.release_date[0])]
   }
+
   if(newSearchTokens.release_date[1].length > 0){
-    data.searchTokens.release_date[1].push(newSearchTokens.release_date[1]);
+    for (let i = 0; i < newSearchTokens.release_date[1].length; i++){
+      data.searchTokens.release_date[1].push(newSearchTokens.release_date[1][i]);
+    }
+    // Remove duplicates
     data.searchTokens.release_date[1] = [...new Set(data.searchTokens.release_date[1])]
   }
+
   if(newSearchTokens.runtime[0].length > 0){
-    data.searchTokens.runtime[0].push(newSearchTokens.runtime[0]);
+    for (let i = 0; i < newSearchTokens.runtime[0].length; i++){
+      data.searchTokens.runtime[0].push(newSearchTokens.runtime[0][i]);
+    }
+    // Remove duplicates
     data.searchTokens.runtime[0] = [...new Set(data.searchTokens.runtime[0])]
   }
+
   if(newSearchTokens.runtime[1].length > 0){
-    data.searchTokens.runtime[1].push(newSearchTokens.runtime[1]);
+    for (let i = 0; i < newSearchTokens.runtime[1].length; i++){
+      data.searchTokens.runtime[1].push(newSearchTokens.runtime[1][i]);
+    }
+    // Remove duplicates
     data.searchTokens.runtime[1] = [...new Set(data.searchTokens.runtime[1])]
   }
+
   data.searchTokens.unclassified[0] = [...new Set([...data.searchTokens.unclassified[0], ...newSearchTokens.unclassified[0]])];
   data.searchTokens.unclassified[1] = [...new Set([...data.searchTokens.unclassified[1], ...newSearchTokens.unclassified[1]])];
+
   return data;
+}
+
+// Append search tokens by getting the union of the arrays for each category
+function removeOldTokens(result, searchTokens){
+  result.searchTokens.genre[0] = removeTokens(result.searchTokens.genre[0], searchTokens.genre[0], false);
+  result.searchTokens.genre[1] = removeTokens(result.searchTokens.genre[1], searchTokens.genre[1], false);
+  result.searchTokens.production_company[0] = removeTokens(result.searchTokens.production_company[0], searchTokens.production_company[0], false);
+  result.searchTokens.production_company[1] = removeTokens(result.searchTokens.production_company[1], searchTokens.production_company[1], false);
+  result.searchTokens.cast[0] = removeTokens(result.searchTokens.cast[0], searchTokens.cast[0], false);
+  result.searchTokens.cast[1] = removeTokens(result.searchTokens.cast[1], searchTokens.cast[1], false);
+  result.searchTokens.character[0] = removeTokens(result.searchTokens.character[0], searchTokens.character[0], false);
+  result.searchTokens.character[1] = removeTokens(result.searchTokens.character[1], searchTokens.character[1], false);
+  result.searchTokens.adult[0] = removeTokens(result.searchTokens.adult[0], searchTokens.adult[0], false);
+  result.searchTokens.adult[1] = removeTokens(result.searchTokens.adult[1], searchTokens.adult[1], false);
+  result.searchTokens.unclassified[0] = removeTokens(result.searchTokens.unclassified[0], searchTokens.unclassified[0], false);
+  result.searchTokens.unclassified[1] = removeTokens(result.searchTokens.unclassified[1], searchTokens.unclassified[1], false);
+  result.searchTokens.release_date[0] = removeTokens(result.searchTokens.release_date[0], searchTokens.release_date[0], true);
+  result.searchTokens.release_date[1] = removeTokens(result.searchTokens.release_date[1], searchTokens.release_date[1], true);
+  result.searchTokens.runtime[0] = removeTokens(result.searchTokens.runtime[0], searchTokens.runtime[0], true);
+  result.searchTokens.runtime[1] = removeTokens(result.searchTokens.runtime[1], searchTokens.runtime[1], true);
+
+
+  
+  return result;
+}
+
+// Append search tokens by getting the union of the arrays for each category
+function removeTokens(oldSearchTokens, newSearchTokens, is2D){
+  var filteredArr = [];
+  var index = -1;
+  if (is2D){
+    for (let i = 0; i < oldSearchTokens.length; i++){
+      for (let j = 0; j < newSearchTokens.length; j++){
+        if (oldSearchTokens[i].toString() === newSearchTokens[j].toString()){
+          index = i;
+          break;
+        }
+      }
+
+      if(index >= 0){
+        oldSearchTokens.splice(index, 1); 
+        filteredArr = oldSearchTokens;
+      }
+    }
+  }else{
+    filteredArr = oldSearchTokens.filter(item => !newSearchTokens.includes(item))
+  }
+
+  return filteredArr;
 }
 
 
