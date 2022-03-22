@@ -65,10 +65,7 @@ module.exports = {
             ];
 
             filter = [
-                {term: {"status": "released"}},
-                {range: {"runtime": {"gte": "60"}}},
-                {range: {"release_date": {"gte": "1990-01-01"}}},
-                {term: {"original_language": "en"}}
+                {term: {"status": "released"}}
             ];
 
             
@@ -185,7 +182,7 @@ module.exports = {
                                 // Range between the given date (current year to next year)
                                 var nextYr = new Date(release_date[i][1]);
                                 nextYr.setFullYear(nextYr.getFullYear() + 1);
-                                nextYr = nextYr.getFullYear()+'-'+(nextYr.getMonth()+1)+'-'+nextYr.getDate(); 
+                                nextYr = nextYr.toISOString().substring(0 , 10)
                                 should.push({range: {"release_date": {"gte": release_date[i][1]}}});
                                 should.push({range: {"release_date": {"lte": nextYr}}});
                             }else{
@@ -194,9 +191,11 @@ module.exports = {
                         } else{
                             if(release_date[i][0] == "eq"){
                                 // Range between the given date
+                                console.log("ES release date")
+                                console.log(release_date[i])
                                 var nextYr = new Date(release_date[i][1]);
                                 nextYr.setFullYear(nextYr.getFullYear() + 1);
-                                nextYr = nextYr.getFullYear()+'-'+(nextYr.getMonth()+1)+'-'+nextYr.getDate(); 
+                                nextYr = nextYr.toISOString().substring(0 , 10)
                                 must.push({range: {"release_date": {"gte": release_date[i][1]}}});
                                 must.push({range: {"release_date": {"lte": nextYr}}});
                             }else{
@@ -223,7 +222,7 @@ module.exports = {
                             // Range between the given date
                             var nextYr = new Date(release_date[i][1]);
                             nextYr.setFullYear(nextYr.getFullYear() + 1);
-                            nextYr = nextYr.getFullYear()+'-'+(nextYr.getMonth()+1)+'-'+nextYr.getDate(); 
+                            nextYr = nextYr.toISOString().substring(0 , 10)
                             must_not.push({range: {"release_date": {"gte": release_date[i][1]}}});
                             must_not.push({range: {"release_date": {"lte": nextYr}}});
                         }else{
@@ -236,12 +235,6 @@ module.exports = {
 
             // Search for language
             if(data.searchTokens.original_language[0].length > 0){
-                // Remove default filter
-                const index = filter.findIndex(x => JSON.stringify(x).includes("en"));
-                if (index > -1){
-                    filter.splice(index,1);
-                }
-
                 var original_language = data.searchTokens.original_language[0];
                 for (let i = 0; i < original_language.length; i++){
                     if (i > 0){
@@ -255,12 +248,6 @@ module.exports = {
 
             // Search for language
             if(data.searchTokens.original_language[1].length > 0){
-                // Remove default filter
-                const index = filter.findIndex(x => JSON.stringify(x).includes("en"));
-                if (index > -1){
-                    filter.splice(index,1);
-                }
-
                 var original_language = data.searchTokens.original_language[1];
                 for (let i = 0; i < original_language.length; i++){
                     must_not.push({"term": {"original_language": original_language[i]}});

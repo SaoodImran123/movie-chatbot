@@ -170,7 +170,14 @@ function showESResult(result, socket){
     }else{
       request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":result.message} }, (err, res, searchTokens) => {
         if (err) { return console.log(err); }
-        // Remove token from 
+
+        // TODO: check search tokens if it got classified
+        if (result.response.length == 0){
+          result.bot_message =  ["Sorry! I can't understand you. Try one of these options", "Sorry! I don't understand. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
+        }else{
+          result.bot_message =  ["Sorry! I didn't find a match for your search. Try one of these options", "I didn't find a match for this search. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
+        }
+        // Remove token from query
         result.searchTokens.genre = result.searchTokens.genre.filter(item => !searchTokens.genre.includes(item))
         result.searchTokens.production_company = result.searchTokens.production_company.filter(item => !searchTokens.production_company.includes(item))
         result.searchTokens.cast = result.searchTokens.cast.filter(item => !searchTokens.cast.includes(item))
@@ -182,11 +189,6 @@ function showESResult(result, socket){
         result.searchTokens.unclassified = result.searchTokens.unclassified.filter(item => !searchTokens.unclassified.includes(item))
         console.log("After removal")
         console.log(result)
-        if (result.response.length == 0){
-          result.bot_message =  ["Sorry! I can't understand you. Try one of these options", "Sorry! I don't understand. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
-        }else{
-          result.bot_message =  ["Sorry! I didn't find a match for your search. Try one of these options", "I didn't find a match for this search. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
-        }
 
         // Choose a response
         let findMissingReqIndex = (element) => element == false;

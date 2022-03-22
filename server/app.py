@@ -223,6 +223,7 @@ def checkReleaseDate(user_text):
     yr = 0
     mn = 0
     dy = 0
+    date = ""
     # Check if string contains  the substring from the requestType
     if not any(ele in user_text for ele in requestType):
         return [], []
@@ -238,7 +239,7 @@ def checkReleaseDate(user_text):
         test_list = ["year", "past", "month", "day"]
 
         for request in requestType:
-            generalRegex = re.escape(request) + r"\s+\d+"
+            generalRegex = re.escape(request) + r"\s+\d+s?"
             generalRequest = re.findall(generalRegex,user_text)
             
             if generalRequest:
@@ -255,32 +256,38 @@ def checkReleaseDate(user_text):
             yearsAndMonths = re.findall("[pl]ast+\s+\d+years?\sand+\s+\d+month|[pl]ast+\s+\d+\syears?\sand+\s+\d+\smonths?",user_text)
             if singleYear:
                 yr = 1
+                generalRequest = singleYear[0]
             if pastYear:
                 yearsAmount = re.findall("[-+]?(?:\d*\.\d+|\d+)",pastYear[0])
                 yr = int(yearsAmount[0])
-            if pastMonth:
+                generalRequest = pastYear[0]
+            if pastMonth: 
                 monthsAmount = re.findall("[-+]?(?:\d*\.\d+|\d+)",pastMonth[0])
                 mn = int(monthsAmount[0])
+                generalRequest = pastMonth[0]
             if pastDays:
                 daysAmount = re.findall("[-+]?(?:\d*\.\d+|\d+)",pastDays[0])
                 dy = int(daysAmount[0])
+                generalRequest = pastDays[0]
             if yearsAndMonths:
                 yearsAndMonths = re.findall("[-+]?(?:\d*\.\d+|\d+)",yearsAndMonths[0])
                 yr = 0
                 mn = int(yearsAndMonths[0]) * 12 + int(yearsAndMonths[1])
-
+                generalRequest = yearsAndMonths[0]
+            
         today = datetime.datetime.today()
         if yr > 0 or mn > 0 or dy > 0:
             requestedTimeFrame = today - relativedelta(years=yr)
             requestedTimeFrame = requestedTimeFrame - relativedelta(months=mn)
             requestedTimeFrame = requestedTimeFrame - relativedelta(days=dy)
             requestedTimeFrame = str(requestedTimeFrame.year) + "-" + str(requestedTimeFrame.month) + "-" + str(requestedTimeFrame.day)
-            return[type,requestedTimeFrame]
+            requestedTimeFrame = datetime.datetime.strptime(requestedTimeFrame, "%Y-%m-%d").strftime("%Y-%m-%d")
+            return [type,requestedTimeFrame], [generalRequest]
         if date.month == today.month and date.day == today.day:
             date = date.replace(month=1, day=1)
             date = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
             date = datetime.datetime.strptime(date, "%Y-%m-%d").strftime("%Y-%m-%d")
-        
+
         return [type, date], generalRequest
     except ValueError:
         return [], []
@@ -357,9 +364,14 @@ def checkPolarity(keywords, sentences, ppn, filter):
 
         # Filter from keyword list
         if filter:
-            combined_keywords = filtered_keywords + keywords
+            print("keywords app",file=sys.stderr)
+            combined_keywords = list(set(filtered_keywords + keywords))
+            print(combined_keywords,file=sys.stderr)
+            print(ppn,file=sys.stderr)
             for token in combined_keywords:
-                ppn = list([word for word in ppn if token not in word])
+                ppn = list([word for word in ppn if word not in token])
+            
+            print(ppn,file=sys.stderr)
 
         return [positiveArr, negativeArr], ppn
     else:
@@ -449,14 +461,14 @@ def classify(user_text):
     else:
         runtime = [[],runtime]
     
+    # Remove cast keyword from the tokens and check polarity
+    cast = checkCast(castNameSet, filtered_ppn)
+    cast, filtered_ppn = checkPolarity(cast, sentences, filtered_ppn, True)
+    
     # Remove production company keyword from the tokens and check polarity
     production_company = checkProductionCompanies(productionCompaniesName, filtered_ppn)
     production_company, filtered_ppn = checkPolarity(production_company, sentences, filtered_ppn, True)
     
-    # Remove cast keyword from the tokens and check polarity
-    cast = checkCast(castNameSet, filtered_ppn)
-    cast, filtered_ppn = checkPolarity(cast, sentences, filtered_ppn, True)
-
     # Remove character keyword from the tokens and check polarity
     character = checkCharacters(castCharactersSet, filtered_ppn)
     character, filtered_ppn = checkPolarity(character, sentences, filtered_ppn, True)
