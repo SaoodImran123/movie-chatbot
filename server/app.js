@@ -179,8 +179,9 @@ function showESResult(result, socket){
         }
         // Remove token from query
         console.log("After removal")
-        console.log(searchTokens)
         result = removeOldTokens(result, searchTokens);
+
+        result = checkRequirements(result);
 
         // Choose a response
         let findMissingReqIndex = (element) => element == false;
@@ -211,7 +212,7 @@ function showESResult(result, socket){
           console.log(result)
           // Send back to frontend
           socket.emit('MESSAGE', result);
-        });
+      });
     }
   } catch (error) {
     console.log(error);
@@ -295,14 +296,14 @@ function removeOldTokens(result, searchTokens){
   result.searchTokens.character[1] = removeTokens(result.searchTokens.character[1], searchTokens.character[1], false);
   result.searchTokens.adult[0] = removeTokens(result.searchTokens.adult[0], searchTokens.adult[0], false);
   result.searchTokens.adult[1] = removeTokens(result.searchTokens.adult[1], searchTokens.adult[1], false);
+  result.searchTokens.original_language[0] = removeTokens(result.searchTokens.original_language[0], searchTokens.original_language[0], false);
+  result.searchTokens.original_language[1] = removeTokens(result.searchTokens.original_language[1], searchTokens.original_language[1], false);
   result.searchTokens.unclassified[0] = removeTokens(result.searchTokens.unclassified[0], searchTokens.unclassified[0], false);
   result.searchTokens.unclassified[1] = removeTokens(result.searchTokens.unclassified[1], searchTokens.unclassified[1], false);
   result.searchTokens.release_date[0] = removeTokens(result.searchTokens.release_date[0], searchTokens.release_date[0], true);
   result.searchTokens.release_date[1] = removeTokens(result.searchTokens.release_date[1], searchTokens.release_date[1], true);
   result.searchTokens.runtime[0] = removeTokens(result.searchTokens.runtime[0], searchTokens.runtime[0], true);
   result.searchTokens.runtime[1] = removeTokens(result.searchTokens.runtime[1], searchTokens.runtime[1], true);
-
-
   
   return result;
 }
