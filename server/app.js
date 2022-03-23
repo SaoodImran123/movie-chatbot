@@ -51,7 +51,7 @@ function runPy(sentence){
       //On 'results' we get list of strings of all print done in your py scripts sequentially. 
       let tokens = [];
       if (err) throw err;
-      console.log('results: ');
+      //console.log('results: ');
       if(results && results.length>0){
         for(let i of results){
           tokens.push(i);
@@ -65,7 +65,7 @@ function runPy(sentence){
 
 // SERVER
 const server = app.listen(port, function() {
-    console.log('server running on port ' + port);
+    //console.log('server running on port ' + port);
 });
 
 const io = require('socket.io')(server, {
@@ -75,7 +75,7 @@ const io = require('socket.io')(server, {
   });
 
 io.on('connection', function(socket) {
-    console.log(socket.id)
+    //console.log(socket.id)
     socket.on('SEND_MESSAGE', function(data) {
       return new Promise(async function(resolve, reject){
 
@@ -84,8 +84,8 @@ io.on('connection', function(socket) {
 
         request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":data.message} }, (err, res, searchTokens) => {
           if (err) { return console.log(err); }
-          console.log("Search tokens: ");
-          console.log(searchTokens);
+          //console.log("Search tokens: ");
+          //console.log(searchTokens);
 
           // Append searchTokens to previous searchTokens
           data = combineArray(data, searchTokens);
@@ -104,15 +104,13 @@ io.on('connection', function(socket) {
        
 
       }).catch(()=> {console.log("FAILED")})
-        // send nlp 
-        // return back to client
     });
 });
 
 function showESResult(result, socket){
   try {
     // Check if Elasticsearch returns a response
-    if(result.response.length >0 && result.noResult !== true){
+    if(result.response.length > 0 && (result.noResult !== true || result.total <= 5)){
       // Only display top 5 recommendation
       result.response = result.response.slice(0, 5);
 
@@ -121,97 +119,58 @@ function showESResult(result, socket){
         return e == true;
       });
 
-      if(isTrue){
+      if(isTrue || result.response.length < 5){
         result.bot_message =  "I recommend "; 
-        for(var i =0; i < result.response.length; i++){
-          if(i < result.response.length -1){
-            result.bot_message += result.response[i]._source.title + ", ";
-          }else{
-            result.bot_message += "and " + result.response[i]._source.title;
+        if (result.response.length > 1){
+          for(var i =0; i < result.response.length; i++){
+            if(i < result.response.length -1){
+              result.bot_message += result.response[i]._source.title + ", ";
+            }else{
+              result.bot_message += "and " + result.response[i]._source.title;
+            }
           }
+        }else{
+          result.bot_message += result.response[0]._source.title;
         }
+
       }else{
-        let findMissingReqIndex = (element) => element == false;
-        let reqIndex = result.requirements.findIndex(findMissingReqIndex);
-
-        // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
-        if (REQUIREMENTS[reqIndex] == "genre"){
-          result.bot_message = ["What genre do you usually like watching?", "What kind of genre do you prefer?", "Any preference on genre?"];
-          result.guided_ans = ["I want action movies", "I want comedy movies", "I want romance movies"];
-        }else if(REQUIREMENTS[reqIndex] == "cast"){
-          result.bot_message = ["Any preference on any actors or actresses?", "Do you want to watch any particular actor or actress?", "Any actors or actress you like watching?"];
-          result.guided_ans = ["I want a movie starring Tom Hanks", "I love Tom holland", "Any movie with Natalie Portman is good"];
-        }else if(REQUIREMENTS[reqIndex] == "release_date"){
-          result.bot_message = ["Do you have any preference on how old the movie is?", "Any preference on when the movie was released?"];
-          result.guided_ans = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie released before 2009"];
-        }else if(REQUIREMENTS[reqIndex] == "original_language"){
-          result.bot_message = ["What would you like the language to be?", "Do you prefer a movie with a specific language?", "Any preference on the language of the movie?"];
-          result.guided_ans = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
-        }else if(REQUIREMENTS[reqIndex] == "runtime"){
-          result.bot_message = ["How long do you want the movie to be?", "Any preference on the movie length?"];
-          result.guided_ans = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want an 1hr 30min movie"];
-        }
-        else if(REQUIREMENTS[reqIndex] == "production_company"){
-          result.bot_message = ["Any preference on a production company?", "Do you want to watch a movie from a particular production company?", "Any production companies you prefer?"];
-          result.guided_ans = ["I want a movie produced by Marvel Studios", "I want a movie produced by Lionsgate", "I want a Pixar movie"];
-        }
-
-        // Select a random bot message
-        result.bot_message = result.bot_message[Math.floor(Math.random()*result.bot_message.length)];
-
-
-        // remove message from result to avoid duplicate messages
-        delete result.message;
-        
-        console.log(result)
-        // Send back to frontend
-        socket.emit('MESSAGE', result);
+        result.bot_message = chooseResponse(result.requirements);
+        result.guided_ans = chooseGuidedAns(result.requirements);
       }
+
+      // remove message from result to avoid duplicate messages
+      delete result.message;
+        
+      //console.log(result)
+      // Send back to frontend
+      socket.emit('MESSAGE', result);
+
     }else{
       request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":result.message} }, (err, res, searchTokens) => {
         if (err) { return console.log(err); }
 
         // TODO: check search tokens if it got classified
-        if (result.response.length == 0){
+        // result.response.length
+        if (result.total == 0){
           result.bot_message =  ["Sorry! I can't understand you. Try one of these options", "Sorry! I don't understand. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
-        }else{
+        }else if (result.total > 0){
           result.bot_message =  ["Sorry! I didn't find a match for your search. Try one of these options", "I didn't find a match for this search. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
         }
         // Remove token from query
-        console.log("After removal")
         result = removeOldTokens(result, searchTokens);
-
         result = checkRequirements(result);
 
         // Choose a response
-        let findMissingReqIndex = (element) => element == false;
-        let reqIndex = result.requirements.findIndex(findMissingReqIndex);
-
-        // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
-        if (REQUIREMENTS[reqIndex] == "genre"){
-          result.guided_ans = ["I want action movies", "I want comedy movies", "I want romance movies"];
-        }else if(REQUIREMENTS[reqIndex] == "cast"){
-          result.guided_ans = ["I want a movie starring Tom Hanks", "I love Tom holland", "Any movie with Natalie Portman is good"];
-        }else if(REQUIREMENTS[reqIndex] == "release_date"){
-          result.guided_ans = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie in 2020"];
-        }else if(REQUIREMENTS[reqIndex] == "original_language"){
-          result.guided_ans = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
-        }else if(REQUIREMENTS[reqIndex] == "runtime"){
-          result.guided_ans = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want an 1hr 30min movie"];
-        }
-        else if(REQUIREMENTS[reqIndex] == "production_company"){
-          result.guided_ans = ["I want a movie produced by Marvel Studios", "I want a movie produced by Lionsgate", "I want a Pixar movie"];
-        }
-
-
+        result.guided_ans = chooseGuidedAns(result.requirements);
+        
         result.bot_message = result.bot_message[Math.floor(Math.random()*result.bot_message.length)];
 
-          // remove message from result to avoid duplicate messages
-          delete result.message;
+        // remove message from result to avoid duplicate messages
+        delete result.message;
 
-          console.log(result)
-          // Send back to frontend
-          socket.emit('MESSAGE', result);
+        //console.log(result)
+        // Send back to frontend
+        socket.emit('MESSAGE', result);
       });
     }
   } catch (error) {
@@ -333,6 +292,60 @@ function removeTokens(oldSearchTokens, newSearchTokens, is2D){
   return filteredArr;
 }
 
+// Choose guided answers 
+function chooseResponse(requirements){
+    let response = [];
+
+    // Find index of the missing requirement
+    let findMissingReqIndex = (element) => element == false;
+    let reqIndex = requirements.findIndex(findMissingReqIndex);
+
+    // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
+    if (REQUIREMENTS[reqIndex] == "genre"){
+      response = ["What genre do you usually like watching?", "What kind of genre do you prefer?", "Any preference on genre?"];
+    }else if(REQUIREMENTS[reqIndex] == "cast"){
+      response = ["Any preference on any actors or actresses?", "Do you want to watch any particular actor or actress?", "Any actors or actress you like watching?"];
+    }else if(REQUIREMENTS[reqIndex] == "release_date"){
+      response = ["Do you have any preference on how old the movie is?", "Any preference on when the movie was released?"];
+    }else if(REQUIREMENTS[reqIndex] == "original_language"){
+      response = ["What would you like the language to be?", "Do you prefer a movie with a specific language?", "Any preference on the language of the movie?"];
+    }else if(REQUIREMENTS[reqIndex] == "runtime"){
+      response = ["How long do you want the movie to be?", "Any preference on the movie length?"];
+    }else if(REQUIREMENTS[reqIndex] == "production_company"){
+      response = ["Any preference on a production company?", "Do you want to watch a movie from a particular production company?", "Any production companies you prefer?"];
+    }
+
+    response = response[Math.floor(Math.random()*response.length)];
+
+    return response;
+}
+
+// Choose guided answers 
+function chooseGuidedAns(requirements){
+  let response = [];
+
+  // Find index of the missing requirement
+  let findMissingReqIndex = (element) => element == false;
+  let reqIndex = requirements.findIndex(findMissingReqIndex);
+
+  // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
+  if (REQUIREMENTS[reqIndex] == "genre"){
+    response = ["I want action movies", "I want comedy movies", "I want romance movies"];
+  }else if(REQUIREMENTS[reqIndex] == "cast"){
+    response = ["I want a movie starring Tom Hanks", "I love Tom holland", "Any movie with Natalie Portman is good"];
+  }else if(REQUIREMENTS[reqIndex] == "release_date"){
+    response = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie in 2020"];
+  }else if(REQUIREMENTS[reqIndex] == "original_language"){
+    response = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
+  }else if(REQUIREMENTS[reqIndex] == "runtime"){
+    response = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want an 1hr 30min movie"];
+  }else if(REQUIREMENTS[reqIndex] == "production_company"){
+    response = ["I want a movie produced by Marvel Studios", "I want a movie produced by Lionsgate", "I want a Pixar movie"];
+  }
+
+  return response;
+}
+
 
 // ROUTING
 app.get('/nlp', (req, res)=>{
@@ -345,7 +358,7 @@ app.get('/nlp', (req, res)=>{
 
 app.get('/movies-default', (req, res)=>{
 
-  console.log("api received")
+  //console.log("api received")
   elastic.elasticSearchPopular(client).then(
     result=>{
       res.json(result)

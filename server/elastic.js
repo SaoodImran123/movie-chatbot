@@ -70,13 +70,30 @@ module.exports = {
 
             
             // Perform a multi_match when a token is unclassified
-            if(data.searchTokens.unclassified != ""){
+            if(data.searchTokens.unclassified[0].length > 0){
                 if(should["multi_match"]){
-                    should["multi_match"]["query"] = data.searchTokens.unclassified.toString()
+                    should["multi_match"]["query"] = data.searchTokens.unclassified[0].toString().replace(/[\p{P}$+<=>^`|~]/gu, '')
                 }else{
                     should.push( {
                         "multi_match": {
-                            "query": data.searchTokens.unclassified.toString(),
+                            "query": data.searchTokens.unclassified[0].toString().replace(/[\p{P}$+<=>^`|~]/gu, ''),
+                            "fields": [
+                                "cast.character",
+                                "title",
+                                "overview"
+                            ]
+                        }
+                    });
+                }
+            }
+
+            if(data.searchTokens.unclassified[1].length > 0){
+                if(must_not["multi_match"]){
+                    must_not["multi_match"]["query"] = data.searchTokens.unclassified[1].toString().replace(/[\p{P}$+<=>^`|~]/gu, '')
+                }else{
+                    must_not.push( {
+                        "multi_match": {
+                            "query": data.searchTokens.unclassified[1].toString().replace(/[\p{P}$+<=>^`|~]/gu, ''),
                             "fields": [
                                 "cast.character",
                                 "title",
@@ -191,8 +208,6 @@ module.exports = {
                         // } else{
                             if(release_date[i][0] == "eq"){
                                 // Range between the given date
-                                console.log("ES release date")
-                                console.log(release_date[i])
                                 var nextYr = new Date(release_date[i][1]);
                                 nextYr.setFullYear(nextYr.getFullYear() + 1);
                                 nextYr = nextYr.toISOString().substring(0 , 10)
@@ -345,27 +360,39 @@ module.exports = {
             console.log("Elastic Query");
             console.log(JSON.stringify(query));
             client.search(query).then(function(resp) {
+                
+                if (data.total == null || resp.hits.total.value > 0){
+                    old_id = []
+                    new_id = []
 
-                old_id = []
-                new_id = []
+                    // Save old and new ids to compare
+                    for (let i = 0; i < data.response.length; i++){
+                        old_id.push(data.response[i]._id)
+                    }
+                    for (let i = 0; i < resp.hits.hits.length; i++){
+                        new_id.push(resp.hits.hits[i]._id)
+                    }
 
-                // Check if response doesn't change
-                for (let i = 0; i < data.response.length; i++){
-                    old_id.push(data.response[i]._id)
-                }
-                for (let i = 0; i < resp.hits.hits.length; i++){
-                    new_id.push(resp.hits.hits[i]._id)
-                }
-                const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
-                if(data.response && equals(old_id,new_id)){
+                    // Check if response doesn't change
+                    const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+                    console.log(data.total);
+                    console.log(resp.hits.total.value);
+                    if(data.response && equals(old_id,new_id) && data.total == resp.hits.total.value){
+                        data.noResult = true;
+                    }
+                    console.log("equal result");
+                    console.log(old_id.toString());
+                    console.log(new_id.toString());
+                    console.log(data.noResult);
+                    if (resp.hits.total.value > 0){
+                        data.total = resp.hits.total.value;
+                    }
+                    console.log(data.total);
+                }else{
                     data.noResult = true;
                 }
-                console.log("equal result");
-                console.log(old_id.toString());
-                console.log(new_id.toString());
-                console.log(data.noResult);
 
-                //resturns an array of movie hits
+                // Returns an array of movie hits
                 data.response = resp.hits.hits;
                 resolve(data);
             }, function(err) {

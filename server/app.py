@@ -33,6 +33,7 @@ from gibberish_detector import detector
 import sys
 from spacy.tokenizer import Tokenizer
 from spacy.util import compile_infix_regex
+import string
 
 # Constants
 categories = ["genre", "production_company", "cast", "release_date", "language", "age_restriction", "runtime"]
@@ -144,7 +145,7 @@ def checkCast(castNameSet, ppn):
         for x in ppn:
             word = str(x.strip()).lower()
             for y in castNameSet:
-                if SequenceMatcher(None, word, y).quick_ratio() >= 0.9 and word in y:
+                if SequenceMatcher(None, word, y).quick_ratio() >= 0.95 and word in y:
                     cast.append(y)
 
     return cast
@@ -168,7 +169,7 @@ def checkCharacters(characterSet, ppn):
         for x in ppn:
             word = str(x.strip()).lower()
             for y in characterSet:
-                if SequenceMatcher(None, word, y).quick_ratio() >= 0.9 and word in y:
+                if SequenceMatcher(None, word, y).quick_ratio() >= 0.95 and word in y:
                     character.append(y)
                 
     return character
@@ -364,15 +365,10 @@ def checkPolarity(keywords, sentences, ppn, filter):
 
         # Filter from keyword list
         if filter:
-            print("keywords app",file=sys.stderr)
             combined_keywords = list(set(filtered_keywords + keywords))
-            print(combined_keywords,file=sys.stderr)
-            print(ppn,file=sys.stderr)
             for token in combined_keywords:
                 ppn = list([word for word in ppn if word not in token])
             
-            print(ppn,file=sys.stderr)
-
         return [positiveArr, negativeArr], ppn
     else:
         return [[],[]], ppn
@@ -447,7 +443,6 @@ def classify(user_text):
     # Check polarity of release date
     release_date, release_date_keyword = checkReleaseDate(user_text)
     release_date_keyword, filtered_ppn = checkPolarity(release_date_keyword, sentences, filtered_ppn, True)
-    print(release_date,file=sys.stderr)
     if len(release_date_keyword[0]) > 0:
         release_date = [[release_date],[]]
     elif len(release_date_keyword[1]) > 0:
@@ -458,7 +453,6 @@ def classify(user_text):
     # Check polarity of runtime
     runtime, runtimeKeyword = checkRuntime(user_text)
     runtimeKeyword, filtered_ppn = checkPolarity(runtimeKeyword, sentences, filtered_ppn, True)
-    print(runtime,file=sys.stderr)
     if len(runtimeKeyword[0]) > 0:
         runtime = [[runtime],[]]
     elif len(runtimeKeyword[1]) > 0:
@@ -508,12 +502,17 @@ def classify(user_text):
     for token in result[0]:
         # check for nonsense
         if not Detector.is_gibberish(token):
-            positive_result.append(token)
+            new_string = token.translate(str.maketrans('', '', string.punctuation))
+            print(new_string,file=sys.stderr)
+            if new_string:
+                positive_result.append(new_string)
     
     for token in result[1]:
         # check for nonsense
         if not Detector.is_gibberish(token):
-            negative_result.append(token)
+            new_string = token.translate(str.maketrans('', '', string.punctuation))
+            if new_string:
+                negative_result.append(new_string)
     
     keywords["unclassified"] = [list(filter(None, [" ".join(positive_result)])), list(filter(None, [" ".join(negative_result)]))]
 

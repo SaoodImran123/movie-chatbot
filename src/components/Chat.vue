@@ -90,6 +90,7 @@ export default {
             socket : io('ws://'+window.location.hostname+':3050'),
             searchTokens: {genre: [[],[]], production_company: [[],[]], cast:[[],[]], character:[[],[]], release_date: [[],[]], original_language: [[],[]], adult: [[],[]], runtime:[[],[]], unclassified: [[],[]]},
             response: [],
+            total: "",
             requirements: [],
             loading:false
         }
@@ -103,6 +104,7 @@ export default {
                 time: this.time,
                 searchTokens: this.searchTokens,
                 requirements: this.requirements,
+                total: this.total,
                 response: this.response
             });
             var data ={message: msg || this.message, time: this.time};
@@ -130,6 +132,7 @@ export default {
             this.searchTokens = data.searchTokens;
             this.requirements = data.requirements;
             this.response = data.response;
+            this.total = data.total;
 
             // Send data to Home Page
             console.log("here")
