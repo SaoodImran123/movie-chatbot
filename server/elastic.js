@@ -72,11 +72,11 @@ module.exports = {
             // Perform a multi_match when a token is unclassified
             if(data.searchTokens.unclassified[0].length > 0){
                 if(should["multi_match"]){
-                    should["multi_match"]["query"] = data.searchTokens.unclassified[0].toString().replace(/[\p{P}$+<=>^`|~]/gu, '')
+                    should["multi_match"]["query"] = data.searchTokens.unclassified[0].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, '')
                 }else{
                     should.push( {
                         "multi_match": {
-                            "query": data.searchTokens.unclassified[0].toString().replace(/[\p{P}$+<=>^`|~]/gu, ''),
+                            "query": data.searchTokens.unclassified[0].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, ''),
                             "fields": [
                                 "cast.character",
                                 "title",
@@ -89,11 +89,11 @@ module.exports = {
 
             if(data.searchTokens.unclassified[1].length > 0){
                 if(must_not["multi_match"]){
-                    must_not["multi_match"]["query"] = data.searchTokens.unclassified[1].toString().replace(/[\p{P}$+<=>^`|~]/gu, '')
+                    must_not["multi_match"]["query"] = data.searchTokens.unclassified[1].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, '')
                 }else{
                     must_not.push( {
                         "multi_match": {
-                            "query": data.searchTokens.unclassified[1].toString().replace(/[\p{P}$+<=>^`|~]/gu, ''),
+                            "query": data.searchTokens.unclassified[1].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, ''),
                             "fields": [
                                 "cast.character",
                                 "title",
