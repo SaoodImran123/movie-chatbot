@@ -65,13 +65,18 @@ module.exports = {
             ];
 
             filter = [
-                {term: {"status": "released"}}
+                {term: {"status": "released"}},
+                {range: {"release_date": {"gte": "1920-01-01"}}},
+                {range: {"runtime": {"gte": "10"}}},
+                {range: {"vote_count": {"gte": "100"}}},
+                {range: {"vote_average": {"gte": "3"}}},
+                {range: {"popularity": {"gte": "10"}}}
             ];
 
             
             // Perform a multi_match when a token is unclassified
             if(data.searchTokens.unclassified[0].length > 0){
-                if(should["multi_match"]){
+                if(must["multi_match"]){
                     should["multi_match"]["query"] = data.searchTokens.unclassified[0].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, '')
                 }else{
                     should.push( {
@@ -79,19 +84,21 @@ module.exports = {
                             "query": data.searchTokens.unclassified[0].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, ''),
                             "fields": [
                                 "cast.character",
-                                "title",
-                                "overview"
-                            ]
+                                "title^2",
+                                "overview^3",
+                                "production_companies.name"
+                            ],
+                            "operator": "or"
                         }
                     });
                 }
             }
 
             if(data.searchTokens.unclassified[1].length > 0){
-                if(must_not["multi_match"]){
-                    must_not["multi_match"]["query"] = data.searchTokens.unclassified[1].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, '')
+                if(must["multi_match"]){
+                    must["multi_match"]["query"] = data.searchTokens.unclassified[1].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, '')
                 }else{
-                    must_not.push( {
+                    must.push( {
                         "multi_match": {
                             "query": data.searchTokens.unclassified[1].join(" ").replace(/[\p{P}$+<=>^`|~]/gu, ''),
                             "fields": [
@@ -119,7 +126,9 @@ module.exports = {
             // Negative Genre query
             if(data.searchTokens.genre[1].length > 0){
                 var genres = data.searchTokens.genre[1];
-                must_not.push({"term": {"genres.name": genres[i]}});
+                for (let i = 0; i < genres.length; i++){
+                    must_not.push({"term": {"genres.name": genres[i]}});
+                }
             }
 
             // Search for production company
