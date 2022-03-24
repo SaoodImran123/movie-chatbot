@@ -186,7 +186,7 @@ def checkRuntime(user_text):
                 type = "lte"
             break
     
-    generalRegex = "\d+:\d+|\d+hrs|\d+hr|\d+\shours|\d+\shrs|\d+hours|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr|\d+mins|\d+\smins|\d+min|\d+\smin|\d+m|\d+\sm"
+    generalRegex = "\d+:\d+|\d+hrs?|\d+\shours?|\d+\shrs?|\d+hours?|\d+\.\d+hrs?|\d+\.\d+\shrs?|\d+\.\d+hours?|\d+\.\d+\shours?|\d+mins?|\d+\smins?|\d+m|\d+\sm"
     generalRequest = re.findall(generalRegex,user_text)
     
     #timeMention1 = re.findall("\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+min|\d+\smin|\d+m",user_text)
@@ -503,7 +503,6 @@ def classify(user_text):
         # check for nonsense
         if not Detector.is_gibberish(token):
             new_string = token.translate(str.maketrans('', '', string.punctuation))
-            print(new_string,file=sys.stderr)
             if new_string:
                 positive_result.append(new_string)
     

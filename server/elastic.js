@@ -194,12 +194,6 @@ module.exports = {
 
             // Search for release date
             if(data.searchTokens.release_date[0].length > 0){
-                // Remove default filter
-                const index = filter.findIndex(x => JSON.stringify(x).includes("1990-01-01"));
-                if (index > -1){
-                    filter.splice(index,1);
-                }
-
                 for (var i = 0; i < data.searchTokens.release_date[0].length; i++){
                     var release_date = data.searchTokens.release_date[0];
                     for (let i = 0; i < release_date.length; i++){
@@ -233,12 +227,6 @@ module.exports = {
 
             // Search for release date
             if(data.searchTokens.release_date[1].length > 0){
-                // Remove default filter
-                const index = filter.findIndex(x => JSON.stringify(x).includes("1990-01-01"));
-                if (index > -1){
-                    filter.splice(index,1);
-                }
-
                 for (var i = 0; i < data.searchTokens.release_date[1].length; i++){
                     var release_date = data.searchTokens.release_date[1];
                     for (let i = 0; i < release_date.length; i++){
@@ -303,14 +291,6 @@ module.exports = {
             if(data.searchTokens.runtime[0].length > 0){
                 for (var i = 0; i < data.searchTokens.runtime[0].length; i++){
                     var runtime = data.searchTokens.runtime[0];
-
-                    // Remove default filter
-                    if(runtime[i][0] == "lte" && parseInt(runtime[i][1]) <= 60){
-                        const index = filter.findIndex(x => JSON.stringify(x).includes("60"));
-                        if (index > -1){
-                            filter.splice(index,1);
-                        }
-                    }
                     
                     for (let i = 0; i < runtime.length; i++){
                         if(runtime[i][0] == "eq"){
@@ -327,14 +307,6 @@ module.exports = {
             if(data.searchTokens.runtime[1].length > 0){
                 for (var i = 0; i < data.searchTokens.runtime[1].length; i++){
                     var runtime = data.searchTokens.runtime[1];
-
-                    // Remove default filter
-                    if(runtime[i][0] == "lte" && runtime[i][1] <= 60){
-                        const index = filter.findIndex(x => JSON.stringify(x).includes("60"));
-                        if (index > -1){
-                            filter.splice(index,1);
-                        }
-                    }
                     
                     for (let i = 0; i < runtime.length; i++){
                         if(runtime[i][0] == "eq"){
