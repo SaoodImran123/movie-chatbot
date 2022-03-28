@@ -175,14 +175,14 @@ def checkCharacters(characterSet, ppn):
     return character
 
 def checkRuntime(user_text):
-    requestType = ["less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal", "longer than", "shorter than"]
+    requestType = ["under","less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal","over" "longer than", "shorter than"]
     type ="eq"
     finalMins = 0
     for z in requestType:
         if z in user_text:
-            if z in ["greater than", "longer", "more", "long", "longer than"]:
+            if z in ["greater than", "longer", "more", "long", "longer than","over"]:
                 type = "gte"
-            elif z in ["less than","shorter", "no more","short", "shorter than"]:
+            elif z in ["less than","shorter", "no more","short", "shorter than","under"]:
                 type = "lte"
             break
     
