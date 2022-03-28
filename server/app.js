@@ -83,8 +83,7 @@ io.on('connection', function(socket) {
         if (data.isFinal){
             data = resetQuery(data);
             if(data.message.toLowerCase() == "yes"){
-              data.bot_message = "Glad you liked it! Would you like to reset?";
-              data.guided_ans = ["Yes", "No"];
+              data.bot_message = "Glad you liked it!";
               data.isFinal = true;
 
               delete data.message;
