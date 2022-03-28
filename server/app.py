@@ -222,7 +222,7 @@ def checkRuntime(user_text):
 # if words like old return ["lte", "2005-01-01"] by default
 # if words like new return ["gte", "2015-01-01"]
 def checkReleaseDate(user_text):
-    requestType = ["in the last", "in the year","in the past", "in this", "made in", "released in", "released later", "released after", "released before", "from the", "created in", "older than", "from before", "made before", "created before", "newer than", "made after", "created after", "from"]
+    requestType = ["in the last", "in the year","in the past", "in this", "made in", "released in", "released later", "released after", "released before", "from the", "created in", "older than", "from before", "made before", "created before", "newer than", "made after", "created after", "from", "from the year"]
     type ="eq"
     yr = 0
     mn = 0
@@ -287,12 +287,14 @@ def checkReleaseDate(user_text):
             requestedTimeFrame = str(requestedTimeFrame.year) + "-" + str(requestedTimeFrame.month) + "-" + str(requestedTimeFrame.day)
             requestedTimeFrame = datetime.datetime.strptime(requestedTimeFrame, "%Y-%m-%d").strftime("%Y-%m-%d")
             return [type,requestedTimeFrame], [generalRequest]
-        if date.month == today.month and date.day == today.day:
+
+        if date != "" and date.month == today.month and date.day == today.day:
             date = date.replace(month=1, day=1)
             date = str(date.year) + "-" + str(date.month) + "-" + str(date.day)
             date = datetime.datetime.strptime(date, "%Y-%m-%d").strftime("%Y-%m-%d")
 
-        return [type, date], generalRequest
+            return [type, date], generalRequest
+        return [], []
     except ValueError:
         return [], []
 
