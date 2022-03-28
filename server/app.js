@@ -79,13 +79,28 @@ io.on('connection', function(socket) {
     socket.on('SEND_MESSAGE', function(data) {
       return new Promise(async function(resolve, reject){
 
-        //searchTokens is a json string e.g. {"genre":["action","comedy"]} //searchTokens.genre[0]
-        const request = require('request');
 
-        request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":data.message} }, (err, res, searchTokens) => {
+        if (data.isFinal){
+            data = resetQuery(data);
+            if(data.message.toLowerCase() == "yes"){
+              data.bot_message = "Glad you liked it! Would you like to reset?";
+              data.guided_ans = ["Yes", "No"];
+              data.isFinal = true;
+
+              delete data.message;
+              socket.emit('MESSAGE', data);
+            }else{
+              elastic.elasticSearchPopular(client).then(
+                result => {
+                  showDefault(result, socket, data);
+                },
+                error=>console.log(error)
+              )
+            }
+        }else{
+          //searchTokens is a json string e.g. {"genre":["action","comedy"]} //searchTokens.genre[0]
+          request.get('http://127.0.0.1:5000/result', { json: true, body: {"sentence":data.message} }, (err, res, searchTokens) => {
           if (err) { return console.log(err); }
-          //console.log("Search tokens: ");
-          //console.log(searchTokens);
 
           // Append searchTokens to previous searchTokens
           data = combineArray(data, searchTokens);
@@ -101,16 +116,43 @@ io.on('connection', function(socket) {
             error=>console.log(error)
           )
         });
+      }
        
-
       }).catch(()=> {console.log("FAILED")})
     });
+    
 });
+
+function resetQuery(result){
+  result.searchTokens = {genre: [[],[]], production_company: [[],[]], cast:[[],[]], character:[[],[]], release_date: [[],[]], original_language: [[],[]], adult: [[],[]], runtime:[[],[]], unclassified: [[],[]]};
+  result.response = [];
+  result.total = "";
+  result.isFinal = false;
+  result.requirements = [];
+
+  return result;
+}
+
+function showDefault(resp, socket, result){
+
+  result.response = resp;
+  result.response = result.response.slice(0, 5);
+  result.bot_message = "Let's start over. What kind of movies do you like?";
+  result.isFinal = false;
+  result.reset = true;
+
+  // remove message from result to avoid duplicate messages
+  delete result.message;
+    
+  // Send back to frontend
+  socket.emit('MESSAGE', result);
+
+}
 
 function showESResult(result, socket){
   try {
     // Check if Elasticsearch returns a response
-    if(result.response.length > 0 && (result.noResult !== true || result.total <= 5)){
+    if(result.response.length > 0 && !result.noResult && result.total > 0){
       // Only display top 5 recommendation
       result.response = result.response.slice(0, 5);
 
@@ -119,7 +161,7 @@ function showESResult(result, socket){
         return e == true;
       });
 
-      if(isTrue || result.response.length < 5){
+      if(isTrue || result.response.length < 5 || result.total <= 5){
         result.bot_message =  "I recommend "; 
         if (result.response.length > 1){
           for(var i =0; i < result.response.length; i++){
@@ -132,11 +174,20 @@ function showESResult(result, socket){
         }else{
           result.bot_message += result.response[0]._source.title;
         }
-
-      }else{
+        result.bot_message += ". Are you satisfied with the recommendations?";
+        result.guided_ans = ["Yes", "No"];
+        result.isFinal = true;
+      }else if(result.resultFiltered){
+        result.bot_message = "The search didn't change the recommendations. ";
+        result.bot_message += chooseResponse(result.requirements);
+        result.guided_ans = chooseGuidedAns(result.requirements);
+      }
+      else{
         result.bot_message = chooseResponse(result.requirements);
         result.guided_ans = chooseGuidedAns(result.requirements);
       }
+
+      result = checkRequirements(result);
 
       // remove message from result to avoid duplicate messages
       delete result.message;
@@ -152,8 +203,9 @@ function showESResult(result, socket){
         // TODO: check search tokens if it got classified
         // result.response.length
         if (result.total == 0){
-          result.bot_message =  ["Sorry! I can't understand you. Try one of these options", "Sorry! I don't understand. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
+          result.bot_message =   ["Sorry! There are no movies with that search. Try one of these options", "I didn't find a movie for this search. Try one of these options", "Sorry! I couldn't find a movie for that. Try one of these options"]; 
         }else if (result.total > 0){
+          // check search token entered
           result.bot_message =  ["Sorry! I didn't find a match for your search. Try one of these options", "I didn't find a match for this search. Try one of these options", "Sorry! I couldn't get a result for that. Try one of these options"]; 
         }
         // Remove token from query
@@ -270,19 +322,14 @@ function removeOldTokens(result, searchTokens){
 // Append search tokens by getting the union of the arrays for each category
 function removeTokens(oldSearchTokens, newSearchTokens, is2D){
   var filteredArr = [];
-  var index = -1;
   if (is2D){
     for (let i = 0; i < oldSearchTokens.length; i++){
+      filteredArr.push(oldSearchTokens[i])
       for (let j = 0; j < newSearchTokens.length; j++){
         if (oldSearchTokens[i].toString() === newSearchTokens[j].toString()){
-          index = i;
+          filteredArr.splice(-1);
           break;
         }
-      }
-
-      if(index >= 0){
-        oldSearchTokens.splice(index, 1); 
-        filteredArr = oldSearchTokens;
       }
     }
   }else{

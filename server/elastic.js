@@ -358,7 +358,10 @@ module.exports = {
                     const equals = (a, b) => JSON.stringify(a) === JSON.stringify(b);
                     console.log(data.total);
                     console.log(resp.hits.total.value);
-                    if(data.response && equals(old_id,new_id) && data.total == resp.hits.total.value){
+                    if(data.response && equals(old_id,new_id) && data.total <= resp.hits.total.value){
+                        data.noResult = false;
+                        data.resultFiltered = true;
+                    } else if(data.response && equals(old_id,new_id) || resp.hits.total.value == 0){
                         data.noResult = true;
                     }
                     console.log("equal result");

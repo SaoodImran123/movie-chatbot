@@ -186,15 +186,18 @@ def checkRuntime(user_text):
                 type = "lte"
             break
     
-    generalRegex = "\d+:\d+|\d+hrs?|\d+\shours?|\d+\shrs?|\d+hours?|\d+\.\d+hrs?|\d+\.\d+\shrs?|\d+\.\d+hours?|\d+\.\d+\shours?|\d+mins?|\d+\smins?|\d+m|\d+\sm"
+    generalRegex = "\d+hrs?\s\d+mins?|\d+hrs?\s\d+\smins?|\d+\shrs?\s\d+\smins?|\d+hours?\s\d+mins?|\d+\shrs?\s\d+ms?|\d+\shrs?\s\d+\sms?|\d+\shours?\s\d+\smins?|hr\s\d+mins?|hr\s\d+\smins?|hr\s\d+\sms?|hr\s\d+ms?|hour\s\d+mins?|hour\s\d+\smins?|hour\s\d+\sms?|hour\s\d+ms?|\d+:\d+|\d+hrs?|\d+\shours?|\d+\shrs?|\d+hours?|\d+\.\d+hrs?|\d+\.\d+\shrs?|\d+\.\d+hours?|\d+\.\d+\shours?|\d+mins?|\d+\smins?|\d+m|\d+\sm"
     generalRequest = re.findall(generalRegex,user_text)
     
     #timeMention1 = re.findall("\d+:\d+|\d+hr|\d+hour|\d+\shour|\d+min|\d+\smin|\d+m",user_text)
     hrMinAmount = re.findall("\d+:\d+",user_text)
-    hrAmount = re.findall("\d+hr|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr",user_text)
+    hrAmount = re.findall("\d+hr|\d+hour|\d+\shour|\d+\.\d+hr|\d+\.\d+\shr|\d+\.\d+hour|\d+\.\d+\shour|\d+\shr|an hour|an hr",user_text)
     minAmount = re.findall("\d+min|\d+\smin|\d+m|\d+\sm",user_text)
     if hrAmount:
-        hrs = re.findall("[-+]?(?:\d*\.\d+|\d+)",hrAmount[0])
+        if hrAmount[0] == "an hour" or hrAmount[0] == "an hr":
+            hrs = ["1"]
+        else:
+            hrs = re.findall("[-+]?(?:\d*\.\d+|\d+)",hrAmount[0])
         finalMins += int(float(hrs[0])*60.0)
         # Convert Hr to mins
         # Need to check greater or less than

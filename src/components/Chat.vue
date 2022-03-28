@@ -91,6 +91,7 @@ export default {
             searchTokens: {genre: [[],[]], production_company: [[],[]], cast:[[],[]], character:[[],[]], release_date: [[],[]], original_language: [[],[]], adult: [[],[]], runtime:[[],[]], unclassified: [[],[]]},
             response: [],
             total: "",
+            isFinal: false,
             requirements: [],
             loading:false
         }
@@ -105,6 +106,7 @@ export default {
                 searchTokens: this.searchTokens,
                 requirements: this.requirements,
                 total: this.total,
+                isFinal: this.isFinal,
                 response: this.response
             });
             var data ={message: msg || this.message, time: this.time};
@@ -133,6 +135,7 @@ export default {
             this.requirements = data.requirements;
             this.response = data.response;
             this.total = data.total;
+            this.isFinal = data.isFinal;
 
             // Send data to Home Page
             console.log("here")
