@@ -175,7 +175,7 @@ def checkCharacters(characterSet, ppn):
     return character
 
 def checkRuntime(user_text):
-    requestType = ["under","less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal","over" "longer than", "shorter than"]
+    requestType = ["under","less than", "greater than", "longer", "shorter", "no more", "more", "long", "short", "equal","over", "longer than", "shorter than"]
     type ="eq"
     finalMins = 0
     for z in requestType:
