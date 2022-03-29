@@ -18,7 +18,7 @@ print("Finished cast")
 productionCompaniesData = collectionTMDB_Production_Companies.find({"id": {"$lte": 20000}, "logo_path": {"$ne": "null"}, "origin_country": "US"})
 productionCompaniesName = []
 for x in productionCompaniesData:
-    if x["name"].lower() != "disneynature":
+    if x["name"].lower() != "disneynature" and x["name"].lower() != "scarlet productions":
         productionCompaniesName.append(x["name"].lower())
 
 productionCompaniesName = list(set(productionCompaniesName) - set(castName))
@@ -44,6 +44,7 @@ print("Finish characters")
 
 genreName = collectionMovies.distinct("genres.name")
 genreName = [genre.lower() for genre in genreName]
+genreName += ["animated", "anime", "sci-fi", "science-fiction", "scifi", "romantic", "rom com", "rom-com", "romcom"]
 statusName = collectionMovies.distinct("status")
 statusName = [status.lower() for status in statusName]
 runTimeWords = ["short", "long", "longer", "hour", "longest", "quick","hr","hrs", "min", "mins"]

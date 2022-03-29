@@ -73,6 +73,45 @@ module.exports = {
                 {range: {"popularity": {"gte": "10"}}}
             ];
 
+            genreShould = [];
+            genreBoolShould =  {
+                "bool": {
+                    "should": genreShould,
+                    "minimum_should_match" : 1
+                }
+             };
+
+            prodShould = [];
+            prodCompanyBoolShould =  {
+                "bool": {
+                    "should": prodShould,
+                    "minimum_should_match" : 1
+                }
+             };
+
+            castShould = [];
+            castBoolShould =  {
+                "bool": {
+                    "should": castShould,
+                    "minimum_should_match" : 1
+                }
+             };
+
+            charShould = [];
+            charBoolShould =  {
+                "bool": {
+                    "should": charShould,
+                    "minimum_should_match" : 1
+                }
+             };
+
+            langShould = [];
+            langBoolShould =  {
+                "bool": {
+                    "should": langShould,
+                    "minimum_should_match" : 1
+                }
+             };
             
             // Perform a multi_match when a token is unclassified
             if(data.searchTokens.unclassified[0].length > 0){
@@ -113,14 +152,27 @@ module.exports = {
 
             // Search for genre
             if(data.searchTokens.genre[0].length > 0){
+                let animation = ["animated", "anime"]
+                let romance = ["romantic", "rom com", "rom-com", "romcom"]
+                let scifi = ["sci-fi", "science-fiction", "scifi"]
                 var genres = data.searchTokens.genre[0];
                 for (let i = 0; i < genres.length; i++){
-                    if (i > 1){
-                        should.push({"term": {"genres.name": genres[i]}});
-                    }else{
-                        must.push({"term": {"genres.name": genres[i]}});
+                    if(romance.includes(genres[i])){
+                        genres[i] = "Romance";
+                    }else if(scifi.includes(genres[i])){
+                        genres[i] = "Science Fiction";
+                    }else if(animation.includes(genres[i])){
+                        genres[i] = "animation";
                     }
+                    genreShould.push({"term": {"genres.name.keyword": {"value": genres[i], "case_insensitive": true}}});
+                    
                 }
+
+                if(genres.length>=2){
+                    genreBoolShould.bool.minimum_should_match = 2
+                }
+                
+                must.push(genreBoolShould);
             }
 
             // Negative Genre query
@@ -135,12 +187,10 @@ module.exports = {
             if(data.searchTokens.production_company[0].length > 0){
                 var production_company = data.searchTokens.production_company[0];
                 for (let i = 0; i < production_company.length; i++){
-                    if (i > 0){
-                        should.push({"term": {"production_companies.name.keyword": {"value": production_company[i], "case_insensitive": true}}});
-                    }else{
-                        must.push({"term": {"production_companies.name.keyword": {"value": production_company[i], "case_insensitive": true}}});
-                    }
+                    prodShould.push({"term": {"production_companies.name.keyword": {"value": production_company[i], "case_insensitive": true}}});
                 }
+
+                must.push(prodCompanyBoolShould);
             }
 
             // Negative production company
@@ -155,12 +205,9 @@ module.exports = {
             if(data.searchTokens.cast[0].length > 0){
                 var cast = data.searchTokens.cast[0];
                 for (let i = 0; i < cast.length; i++){
-                    if (i > 0){
-                        should.push({"term": {"cast.name.keyword": {"value": cast[i], "case_insensitive": true}}});
-                    }else{
-                        must.push({"term": {"cast.name.keyword": {"value": cast[i], "case_insensitive": true}}});
-                    }
+                    castShould.push({"term": {"cast.name.keyword": {"value": cast[i], "case_insensitive": true}}});
                 }
+                must.push(castBoolShould);
             }
 
             // Search for cast
@@ -176,12 +223,9 @@ module.exports = {
                 var character = data.searchTokens.character[0];
                 must.push( {"range": {"cast.popularity": {"gte": "20"}}});
                 for (let i = 0; i < character.length; i++){
-                    if (i > 0){
-                        should.push({"match": {"cast.character": {"query": character[i]}}});
-                    }else{
-                        must.push({"match": {"cast.character": {"query": character[i]}}});
-                    }
+                    charShould.push({"match": {"cast.character": {"query": character[i]}}});
                 }
+                must.push(charBoolShould);
             }
 
             // Search for character
@@ -249,12 +293,9 @@ module.exports = {
             if(data.searchTokens.original_language[0].length > 0){
                 var original_language = data.searchTokens.original_language[0];
                 for (let i = 0; i < original_language.length; i++){
-                    if (i > 0){
-                        should.push({"term": {"original_language": original_language[i]}});
-                    }else{
-                        must.push({"term": {"original_language": original_language[i]}});
-                    }
+                    langShould.push({"term": {"original_language": original_language[i]}});
                 }
+                must.push(langBoolShould);
             }
 
 
@@ -361,7 +402,7 @@ module.exports = {
                     if(data.response && equals(old_id,new_id) && data.total <= resp.hits.total.value){
                         data.noResult = false;
                         data.resultFiltered = true;
-                    } else if(data.response && equals(old_id,new_id) || resp.hits.total.value == 0){
+                    } else if(data.response && equals(old_id,new_id) && resp.hits.total.value == 0){
                         data.noResult = true;
                     }
                     console.log("equal result");
