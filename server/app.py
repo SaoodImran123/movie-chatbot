@@ -301,7 +301,7 @@ def checkReleaseDate(user_text):
 # Determine if sentence with specific keyword is positive
 def checkPolarityGivenKeyword(sentences, keyword):
     conj = ["but", "yet", "except"]
-    negative_words = ["hate", "hated", "despise", "detest", "dont", "nor"]
+    negative_words = ["hate", "hated", "despise", "detest", "dont", "nor", "dislike", "loathe"]
     sentence = []
     prev_sentence = []
     filtered_keyword = keyword.replace('-', ' ', 1).lower()

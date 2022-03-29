@@ -69,7 +69,7 @@ module.exports = {
                 {range: {"release_date": {"gte": "1920-01-01"}}},
                 {range: {"runtime": {"gte": "10"}}},
                 {range: {"vote_count": {"gte": "100"}}},
-                {range: {"vote_average": {"gte": "3"}}},
+                {range: {"vote_average": {"gte": "2"}}},
                 {range: {"popularity": {"gte": "10"}}}
             ];
 
@@ -177,8 +177,18 @@ module.exports = {
 
             // Negative Genre query
             if(data.searchTokens.genre[1].length > 0){
+                let animation = ["animated", "anime"]
+                let romance = ["romantic", "rom com", "rom-com", "romcom"]
+                let scifi = ["sci-fi", "science-fiction", "scifi"]
                 var genres = data.searchTokens.genre[1];
                 for (let i = 0; i < genres.length; i++){
+                    if(romance.includes(genres[i])){
+                        genres[i] = "Romance";
+                    }else if(scifi.includes(genres[i])){
+                        genres[i] = "Science Fiction";
+                    }else if(animation.includes(genres[i])){
+                        genres[i] = "animation";
+                    }
                     must_not.push({"term": {"genres.name": genres[i]}});
                 }
             }

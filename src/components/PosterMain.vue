@@ -124,6 +124,7 @@ export default {
     display: flex;
 }
 .img-container{
+    overflow: hidden;
     width: 100%;
 }
 .movieposter{
