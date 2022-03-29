@@ -179,11 +179,11 @@ function showESResult(result, socket){
       }else if(result.resultFiltered){
         result.bot_message = "The search didn't change the recommendations. ";
         result.bot_message += chooseResponse(result.requirements);
-        result.guided_ans = chooseGuidedAns(result.requirements);
+        result.guided_ans = chooseGuidedAns(result);
       }
       else{
         result.bot_message = chooseResponse(result.requirements);
-        result.guided_ans = chooseGuidedAns(result.requirements);
+        result.guided_ans = chooseGuidedAns(result);
       }
 
       result = checkRequirements(result);
@@ -212,7 +212,8 @@ function showESResult(result, socket){
         result = checkRequirements(result);
 
         // Choose a response
-        result.guided_ans = chooseGuidedAns(result.requirements);
+        result.response = result.oldResponse;
+        result.guided_ans = chooseGuidedAns(result);
         
         result.bot_message = result.bot_message[Math.floor(Math.random()*result.bot_message.length)];
 
@@ -367,29 +368,83 @@ function chooseResponse(requirements){
 }
 
 // Choose guided answers 
-function chooseGuidedAns(requirements){
+function chooseGuidedAns(result){
   let response = [];
+  let requirements = result.requirements;
 
   // Find index of the missing requirement
   let findMissingReqIndex = (element) => element == false;
   let reqIndex = requirements.findIndex(findMissingReqIndex);
+  let movie1 = result.response[0]._source;
+  let movie2 = result.response[2]._source;
+  let movie3 = result.response[4]._source;
 
   // const REQUIREMENTS = ["genre", "production_company", "cast", "release_date", "original_language", "adult", "runtime"]
   if (REQUIREMENTS[reqIndex] == "genre"){
     response = ["I want action movies", "I want comedy movies", "I want romance movies"];
   }else if(REQUIREMENTS[reqIndex] == "cast"){
-    response = ["I want a movie starring Tom Hanks", "I love Tom holland", "Any movie with Natalie Portman is good"];
+    let cast1 = getRandomCast(movie1.cast);
+    let cast2 = getRandomCast(movie2.cast);
+    let cast3 = getRandomCast(movie3.cast);
+
+    // Defaults
+    if (cast1 == null){
+      cast1 = "Tom Hanks";
+    }
+    if (cast2 == null || cast2 == cast1 || cast2 == cast3){
+      cast2 = "Tom Holland";
+    }
+    if (cast3 == null || cast3 == cast1 || cast3 == cast2){
+      cast3 = "Scarlett Johansson";
+    }
+    response = ["I want a movie starring " + cast1, "I love " + cast2, "Any movie with " + cast3 + " is good"];
   }else if(REQUIREMENTS[reqIndex] == "release_date"){
-    response = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie in 2020"];
+    response = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie released before 2016"];
   }else if(REQUIREMENTS[reqIndex] == "original_language"){
     response = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
   }else if(REQUIREMENTS[reqIndex] == "runtime"){
     response = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want an 1hr 30min movie"];
   }else if(REQUIREMENTS[reqIndex] == "production_company"){
-    response = ["I want a movie produced by Marvel Studios", "I want a movie produced by Lionsgate", "I want a Pixar movie"];
+    let pc1 = getRandomProductionCompany(movie1.production_companies);
+    let pc2 = getRandomProductionCompany(movie2.production_companies);
+    let pc3 = getRandomProductionCompany(movie3.production_companies);
+    
+    // Defaults
+    if (pc1 == null){
+      pc1 = "Universal Pictures";
+    }
+    if (pc2 == null || pc2 == pc1 || pc2 == pc3){
+      pc2 = "Lionsgate";
+    }
+    if (pc3 == null || pc3 == pc1 || pc3 == pc2){
+      pc3 = "Walt Disney";
+    }
+
+    response = ["I want a movie produced by " + pc1, "I want a movie produced by " + pc2, "I want a " + pc3 + " movie"];
   }
 
   return response;
+}
+
+// Retrieve a random actor/actress from a list of cast
+function getRandomCast(cast){
+  for (let i = 0; i < cast.length; i++){
+    let randomIndex = Math.floor(Math.random() * cast.length);
+    if (cast[randomIndex].known_for_department == "Acting" && cast[randomIndex].popularity >= 20){
+      return cast[randomIndex].name;
+    }
+  }
+}
+
+// Retrieve a random actor/actress from a list of cast
+function getRandomProductionCompany(production_company){
+  for (let i = 0; i < production_company.length; i++){
+    let randomIndex = Math.floor(Math.random() * production_company.length);
+    if (production_company[randomIndex].logo_path != null && production_company[randomIndex].origin_country == "US" && production_company[randomIndex].id <= 20000){
+      return production_company[randomIndex].name;
+    }
+  }
+  return null
 }
 
 

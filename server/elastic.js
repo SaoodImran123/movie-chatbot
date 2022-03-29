@@ -418,6 +418,7 @@ module.exports = {
                 }
 
                 // Returns an array of movie hits
+                data.oldResponse = data.response;
                 data.response = resp.hits.hits;
                 resolve(data);
             }, function(err) {
