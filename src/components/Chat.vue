@@ -28,7 +28,12 @@
                             <div class="media-body">
                                 <p>{{ msg.bot_message }}</p>
                                 <div class="guided"  v-for="(question, i) in msg.guided_ans" :key="i">
-                                    <button :class="['button recommendation'+ (i+1), {hide: messages.length > index + 1}]" v-on:click="sendMessage($event, question)">{{question}}</button>  
+                                    <div v-if="msg.guided_ans.length == 2 && i == 1">
+                                        <button :class="['button recommendation'+ (i+2), {hide: messages.length > index + 1}]" v-on:click="sendMessage($event, question)">{{question}}</button>  
+                                    </div>
+                                    <div v-else>
+                                        <button :class="['button recommendation'+ (i+1), {hide: messages.length > index + 1}]" v-on:click="sendMessage($event, question)">{{question}}</button>  
+                                    </div>
                                 </div>
                                 <p class="meta"><time datetime="2021">{{ msg.time }}</time></p>
                             </div>
@@ -74,7 +79,7 @@ function getCurrentTime(){
 function getCurrentDate(){
     const monthNames = ["January", "February", "March", "April", "May", "June","July", "August", "September", "October", "November", "December"];
     const today = new Date();
-    var date = monthNames[today.getMonth()] + " " + today.getDay();
+    var date = monthNames[today.getMonth()] + " " + today.getDate();
     return date;
 }
 export default {

@@ -55,7 +55,8 @@ export default {
     display: flex;
 }
 .column{
-    flex: 25%;
+    flex-shrink: 1;
+    flex-basis: 25%;
     padding-right: 40px;
     padding-bottom: 15px;
     padding-top: 15px;
