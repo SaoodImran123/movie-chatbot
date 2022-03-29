@@ -15,7 +15,7 @@ for x in peopleData:
 
 print("Finished cast")
 
-productionCompaniesData = collectionTMDB_Production_Companies.find({"id": {"$lte": 20000}, "logo_path": {"$ne": "null"}, "origin_country": "US"})
+productionCompaniesData = collectionTMDB_Production_Companies.find({"id": {"$lte": 20000}, "logo_path": {"$ne": "null"}, "homepage": {"$ne": ""}, "$or": [{"origin_country": "US"}, {"origin_country": "JP" }, {"origin_country": "CA" }]})
 productionCompaniesName = []
 for x in productionCompaniesData:
     if x["name"].lower() != "disneynature" and x["name"].lower() != "scarlet productions":
