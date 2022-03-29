@@ -189,7 +189,7 @@ module.exports = {
                     }else if(animation.includes(genres[i])){
                         genres[i] = "animation";
                     }
-                    must_not.push({"term": {"genres.name": genres[i]}});
+                    must_not.push({"term": {"genres.name.keyword": {"value": genres[i], "case_insensitive": true}}});
                 }
             }
 

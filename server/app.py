@@ -63,7 +63,7 @@ def custom_tokenizer(nlp):
 
 # For Cast and Production companies
 def extract_proper_nouns(doc):
-    pos = [tok.i for tok in doc if (tok.pos_ == "PROPN" or tok.pos_ == "NOUN" or tok.pos_ == "NUM" or tok.pos_ == "ADJ")]
+    pos = [tok.i for tok in doc if (tok.pos_ == "PROPN" or tok.pos_ == "NOUN" or tok.pos_ == "NUM" or tok.pos_ == "ADJ" or tok.text.lower() == "animated")]
     consecutives = []
     current = []
     for elt in pos:
