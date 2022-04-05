@@ -401,7 +401,7 @@ function chooseGuidedAns(result){
   }else if(REQUIREMENTS[reqIndex] == "release_date"){
     response = ["I want movies released in the past year", "I want movies released after 2010", "I want a movie released before 2016"];
   }else if(REQUIREMENTS[reqIndex] == "original_language"){
-    response = ["I want an english movie", "I would like a movie in japanese", "I want spanish movies"];
+    response = ["I want an English movie", "I would like a movie in Japanese", "I want Spanish movies"];
   }else if(REQUIREMENTS[reqIndex] == "runtime"){
     response = ["I would like a movie longer than 2 hours", "I want a movie shorter than 2 hours", "I want an 1hr 30min movie"];
   }else if(REQUIREMENTS[reqIndex] == "production_company"){
